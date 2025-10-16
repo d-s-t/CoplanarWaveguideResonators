@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Resonator Simulator</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://cdn.plot.ly/plotly-2.24.2.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Resonator Simulator</h1>
+
+    <div class="selectors">
+      <div class="selector">
+        <label for="transition_line_select">Transition Line</label>
+        <select id="transition_line_select"></select>
+        <div id="transition_line_params" class="params"></div>
+      </div>
+
+      <div class="selector">
+        <label for="input_coupling_select">Input Coupling</label>
+        <select id="input_coupling_select"></select>
+        <div id="input_coupling_params" class="params"></div>
+      </div>
+
+      <div class="selector">
+        <label for="output_coupling_select">Output Coupling</label>
+        <select id="output_coupling_select"></select>
+        <div id="output_coupling_params" class="params"></div>
+      </div>
+
+      <div class="selector">
+        <label for="substrate_select">Substrate</label>
+        <select id="substrate_select"></select>
+        <div id="substrate_params" class="params"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="simulate_btn">Simulate (n=1)</button>
+    </div>
+
+    <div class="results">
+      <h2>Results</h2>
+      <div id="outputs">
+        <div>Angular frequency (w1): <span id="w1">-</span></div>
+        <div>Frequency (f1, Hz): <span id="f1">-</span></div>
+        <div>Q (internal): <span id="q_i">-</span></div>
+        <div>Q (external): <span id="q_e">-</span></div>
+        <div>Q (total): <span id="q_tot">-</span></div>
+      </div>
+
+      <div id="plot" style="width:100%;height:400px;margin-top:1rem;"></div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
