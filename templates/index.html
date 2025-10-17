@@ -34,15 +34,15 @@
         </div>
 
         <!-- Stacked input/output - placed in the same area as symmetric container and hidden when symmetric is on -->
-        <div id="input_output_stack" class="selectors two-columns">
-          <div class="selector" id="input_container" style="margin-bottom:0.5rem; display:none;">
+        <div id="input_output_stack" class="selectors two-columns" style="display:none;">
+          <div class="selector" id="input_container">
             <label for="input_coupling_select">Input Coupling</label>
             <select id="input_coupling_select"></select>
             <div id="input_coupling_params" class="params"></div>
             <div id="input_coupling_getters" class="getters"></div>
           </div>
 
-          <div class="selector" id="output_container" style="display:none;">
+          <div class="selector" id="output_container">
             <label for="output_coupling_select">Output Coupling</label>
             <select id="output_coupling_select"></select>
             <div id="output_coupling_params" class="params"></div>
@@ -54,7 +54,7 @@
       <!-- Symmetric coupling checkbox -->
       <div style="margin:8px 0; display:flex; gap:8px; align-items:center;">
         <input type="checkbox" id="symmetric_checkbox" checked>
-        <label for="symmetric_checkbox">Symmetric coupling (single control for input & output)</label>
+        <label for="symmetric_checkbox">Symmetric coupling</label>
       </div>
 
       <!-- Below: substrate and mode -->

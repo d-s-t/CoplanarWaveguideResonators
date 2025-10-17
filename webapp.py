@@ -211,13 +211,6 @@ def simulate():
         if n > 1000:
             n = 1000
 
-        symmetric = bool(payload.get('symmetric', True))
-
-        # If symmetric, force output to follow input selection and params
-        if symmetric:
-            out_name = in_name
-            out_params = dict(in_params)
-
         # transition_line
         if _current['selection']['transition_line'] != t_name:
             # create new instance for transition line, but preserve substrate and other components

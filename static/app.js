@@ -173,9 +173,9 @@ async function main() {
   const inputContainer = document.getElementById('input_container');
   const outputContainer = document.getElementById('output_container');
   const symmetricContainer = document.getElementById('symmetric_container');
+  const ioStack = document.getElementById('input_output_stack');
   const symmetricSelect = document.getElementById('symmetric_coupling_select');
   const symmetricParamsContainer = document.getElementById('symmetric_coupling_params');
-
   buildSelector(opts.transition_lines, tSelect);
   buildSelector(opts.capacitor_couplings, inSelect);
   buildSelector(opts.capacitor_couplings, outSelect);
@@ -236,7 +236,6 @@ async function main() {
       output_coupling_params: outputParams,
       substrate_params: storedParams.substrates[sSelect.value] || {},
       n: n,
-      symmetric: symmetric
     };
 
     try {
@@ -352,20 +351,6 @@ async function main() {
     renderParamsFor('capacitor_couplings', symmetricSelect, symmetricParamsContainer, opts.capacitor_couplings, doSimulate);
     renderParamsFor('substrates', sSelect, sParamsContainer, opts.substrates, doSimulate);
 
-    // if symmetric initially, show/hide containers accordingly
-    if (symmetricCheckbox.checked) {
-      inputContainer.style.display = 'none';
-      outputContainer.style.display = 'none';
-      symmetricContainer.style.display = 'block';
-      // ensure symmetricSelect value synced
-      symmetricSelect.value = inSelect.value;
-      storedParams.capacitor_couplings[symmetricSelect.value] = cloneParams(storedParams.capacitor_couplings[inSelect.value] || {});
-    } else {
-      inputContainer.style.display = 'block';
-      outputContainer.style.display = 'block';
-      symmetricContainer.style.display = 'none';
-    }
-
     // trigger simulate after re-render
     doSimulate();
   };
@@ -410,15 +395,13 @@ async function main() {
 
   symmetricCheckbox.addEventListener('change', () => {
     if (symmetricCheckbox.checked) {
-      inputContainer.style.display = 'none';
-      outputContainer.style.display = 'none';
+      ioStack.style.display = 'none';
       symmetricContainer.style.display = 'block';
       symmetricSelect.value = inSelect.value;
       storedParams.capacitor_couplings[symmetricSelect.value] = cloneParams(storedParams.capacitor_couplings[inSelect.value] || {});
       renderParamsFor('capacitor_couplings', symmetricSelect, symmetricParamsContainer, opts.capacitor_couplings, doSimulate);
     } else {
-      inputContainer.style.display = 'block';
-      outputContainer.style.display = 'block';
+      ioStack.style.removeProperty("display")
       symmetricContainer.style.display = 'none';
       renderParamsFor('capacitor_couplings', inSelect, inParamsContainer, opts.capacitor_couplings, doSimulate);
       renderParamsFor('capacitor_couplings', outSelect, outParamsContainer, opts.capacitor_couplings, doSimulate);
