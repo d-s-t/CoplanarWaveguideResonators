@@ -46,13 +46,9 @@ function _computeRange(defn) {
 }
 
 // stored parameters per category/option
-const storedParams = {
-  transition_lines: {},
-  capacitor_couplings: {},
-  substrates: {}
-};
+// params are read from the DOM; no storedParams object
 
-function createParamControl(name, defn, container, paramsStore, onChange) {
+function createParamControl(name, defn, container, onChange) {
   const wrapper = document.createElement('div');
   wrapper.className = 'param';
 
@@ -71,13 +67,9 @@ function createParamControl(name, defn, container, paramsStore, onChange) {
   inputNumber.min = r.min;
   inputNumber.max = r.max;
   inputNumber.step = r.step;
-  inputNumber.value = (paramsStore && paramsStore[name] !== undefined) ? paramsStore[name] : r.default;
-
-  // initialize store value
-  paramsStore[name] = Number(inputNumber.value);
+  inputNumber.value = (defn && defn.default !== undefined) ? defn.default : r.default;
 
   inputNumber.addEventListener('input', () => {
-    paramsStore[name] = Number(inputNumber.value);
     const range = wrapper.querySelector('.param-range');
     if (range) range.value = inputNumber.value;
     if (onChange) onChange();
@@ -95,7 +87,6 @@ function createParamControl(name, defn, container, paramsStore, onChange) {
 
   inputRange.addEventListener('input', () => {
     inputNumber.value = inputRange.value;
-    paramsStore[name] = Number(inputRange.value);
     if (onChange) onChange();
   });
 
@@ -121,20 +112,8 @@ function renderParamsFor(category, selectEl, paramsContainerEl, optionsMap, onCh
   const entry = optionsMap[key];
   const params = (entry && entry.parameters) ? entry.parameters : {};
 
-  // ensure we have a stored params object for this selection
-  if (!storedParams[category][key]) {
-    storedParams[category][key] = {};
-    // prefill with defaults
-    Object.keys(params).forEach(pn => {
-      const d = params[pn] && params[pn].default !== undefined ? params[pn].default : 0;
-      storedParams[category][key][pn] = d;
-    });
-  }
-
-  const paramsStore = storedParams[category][key];
-
   Object.keys(params).forEach(pname => {
-    createParamControl(pname, params[pname], paramsContainerEl, paramsStore, onChange);
+    createParamControl(pname, params[pname], paramsContainerEl, onChange);
   });
 }
 
@@ -147,13 +126,41 @@ function buildSelector(map, selectEl) {
   });
 }
 
-// helper: deep clone simple object (numbers)
-function cloneParams(obj) {
+// collect parameter values from a params container (reads .param-number inputs)
+function collectParams(container) {
   const out = {};
-  for (const k in obj) out[k] = obj[k];
+  if (!container) return out;
+  const items = container.querySelectorAll('.param');
+  items.forEach(item => {
+    const label = item.querySelector('label');
+    const input = item.querySelector('.param-number');
+    if (label && input) {
+      const name = label.textContent;
+      const val = input.value;
+      out[name] = val === '' ? null : Number(val);
+    }
+  });
   return out;
 }
 
+// copy numeric values from src container into dst container (matching by label text)
+function copyParamValues(srcContainer, dstContainer) {
+  if (!srcContainer || !dstContainer) return;
+  const src = collectParams(srcContainer);
+  const dstItems = dstContainer.querySelectorAll('.param');
+  dstItems.forEach(item => {
+    const label = item.querySelector('label');
+    const num = item.querySelector('.param-number');
+    const range = item.querySelector('.param-range');
+    if (label && num) {
+      const name = label.textContent;
+      if (Object.prototype.hasOwnProperty.call(src, name) && src[name] !== null) {
+        num.value = src[name];
+        if (range) range.value = src[name];
+      }
+    }
+  });
+}
 async function main() {
   let opts;
   try {
@@ -207,23 +214,27 @@ async function main() {
     const symmetric = !!symmetricCheckbox.checked;
     let inputName = inSelect.value;
     let outputName = outSelect.value;
-    let inputParams = storedParams.capacitor_couplings[inputName] || {};
-    let outputParams = storedParams.capacitor_couplings[outputName] || {};
+
+    // gather parameter objects from DOM
+    const transitionParams = collectParams(tParamsContainer);
+    const substrateParams = collectParams(sParamsContainer);
+
+    let inputParams, outputParams;
 
     if (symmetric) {
       // authoritative control is symmetricSelect
       const symName = symmetricSelect.value;
       inputName = symName;
       outputName = symName;
-      const symParams = storedParams.capacitor_couplings[symName] || {};
-      inputParams = symParams;
-      outputParams = symParams;
-      // ensure the hidden input/output storedParams are present
-      storedParams.capacitor_couplings[inputName] = cloneParams(symParams);
-      storedParams.capacitor_couplings[outputName] = cloneParams(symParams);
+      // params taken from symmetric params panel
+      inputParams = collectParams(symmetricParamsContainer);
+      outputParams = inputParams;
       // keep the hidden selects in sync
       inSelect.value = symName;
       outSelect.value = symName;
+    } else {
+      inputParams = collectParams(inParamsContainer);
+      outputParams = collectParams(outParamsContainer);
     }
 
     const payload = {
@@ -231,10 +242,10 @@ async function main() {
       input_coupling: inputName,
       output_coupling: outputName,
       substrate: sSelect.value,
-      transition_line_params: storedParams.transition_lines[tSelect.value] || {},
+      transition_line_params: transitionParams,
       input_coupling_params: inputParams,
       output_coupling_params: outputParams,
-      substrate_params: storedParams.substrates[sSelect.value] || {},
+      substrate_params: substrateParams,
       n: n,
     };
 
@@ -362,8 +373,8 @@ async function main() {
     if (symmetricCheckbox.checked) {
       // when symmetric is on, update symmetric select to match input
       symmetricSelect.value = inSelect.value;
-      storedParams.capacitor_couplings[symmetricSelect.value] = cloneParams(storedParams.capacitor_couplings[inSelect.value] || {});
       renderParamsFor('capacitor_couplings', symmetricSelect, symmetricParamsContainer, opts.capacitor_couplings, doSimulate);
+      copyParamValues(inParamsContainer, symmetricParamsContainer);
     }
     doSimulate();
   });
@@ -373,21 +384,23 @@ async function main() {
     if (symmetricCheckbox.checked) {
       // if user changes output while symmetric is on, keep symmetric in sync
       symmetricSelect.value = outSelect.value;
-      storedParams.capacitor_couplings[symmetricSelect.value] = cloneParams(storedParams.capacitor_couplings[outSelect.value] || {});
       renderParamsFor('capacitor_couplings', symmetricSelect, symmetricParamsContainer, opts.capacitor_couplings, doSimulate);
+      copyParamValues(outParamsContainer, symmetricParamsContainer);
     }
     doSimulate();
   });
 
   symmetricSelect.addEventListener('change', () => {
-    // when symmetric_select changes, copy its stored params to input and output and re-render hidden panels
+    // when symmetric_select changes, copy its values to input and output panels and sync selects
     const sym = symmetricSelect.value;
-    storedParams.capacitor_couplings[sym] = storedParams.capacitor_couplings[sym] || {};
     inSelect.value = sym;
     outSelect.value = sym;
-    storedParams.capacitor_couplings[inSelect.value] = cloneParams(storedParams.capacitor_couplings[sym] || {});
-    storedParams.capacitor_couplings[outSelect.value] = cloneParams(storedParams.capacitor_couplings[sym] || {});
     renderParamsFor('capacitor_couplings', symmetricSelect, symmetricParamsContainer, opts.capacitor_couplings, doSimulate);
+    // re-render hidden panels and copy values from symmetric panel into them
+    renderParamsFor('capacitor_couplings', inSelect, inParamsContainer, opts.capacitor_couplings, doSimulate);
+    renderParamsFor('capacitor_couplings', outSelect, outParamsContainer, opts.capacitor_couplings, doSimulate);
+    copyParamValues(symmetricParamsContainer, inParamsContainer);
+    copyParamValues(symmetricParamsContainer, outParamsContainer);
     doSimulate();
   });
 
@@ -398,8 +411,9 @@ async function main() {
       ioStack.style.display = 'none';
       symmetricContainer.style.display = 'block';
       symmetricSelect.value = inSelect.value;
-      storedParams.capacitor_couplings[symmetricSelect.value] = cloneParams(storedParams.capacitor_couplings[inSelect.value] || {});
       renderParamsFor('capacitor_couplings', symmetricSelect, symmetricParamsContainer, opts.capacitor_couplings, doSimulate);
+      // copy current visible input values into symmetric panel
+      copyParamValues(inParamsContainer, symmetricParamsContainer);
     } else {
       ioStack.style.removeProperty("display")
       symmetricContainer.style.display = 'none';
