@@ -64,15 +64,6 @@
           <select id="substrate_select"></select>
           <div id="substrate_params" class="params"></div>
           <div id="substrate_getters" class="getters"></div>
-
-          <div style="margin-top:0.75rem;">
-            <label for="mode_n_number">Mode (n)</label>
-            <div id="mode_controls" class="params">
-              <label for="mode_n_range"></label>
-              <input id="mode_n_number" class="param-number" type="number" min="1" max="10" step="1" value="1">
-              <input id="mode_n_range" class="param-range" type="range" min="1" max="10" step="1" value="1">
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -80,6 +71,14 @@
     <div class="results-column">
       <div class="results">
         <h2>Results</h2>
+        <div style="margin-top:0.75rem;">
+          <div id="mode_controls" class="params">
+            <label for="mode_n_number">Mode (n)</label>
+            <label for="mode_n_range"></label>
+            <input id="mode_n_number" class="param-number" type="number" min="1" max="10" step="1" value="1">
+            <input id="mode_n_range" class="param-range" type="range" min="1" max="10" step="1" value="1">
+          </div>
+        </div>
         <div id="outputs">
           <div>Angular frequency (w1): <span id="w1">-</span></div>
           <div>Frequency (f1, Hz): <span id="f1">-</span></div>
