@@ -7,7 +7,7 @@ class CapacitorCoupling(ABC, metaclass=RangeCollectorMeta):
     An abstract base class representing a coupling mechanism.
     This class defines the interface for different types of couplings.
     """
-    RESISTANCE_RANGE = ValueRange(50, 500, 1000)  # Ohm
+    RESISTANCE_RANGE = ValueRange(10, 50, 100, 1)  # Ohm
 
     @abstractmethod
     def __init__(self, resistence):
@@ -22,6 +22,9 @@ class CapacitorCoupling(ABC, metaclass=RangeCollectorMeta):
     def parallel_resistance(self, w_n):
         c_k = self.capacitance
         r_l = self.resistance
+        k = w_n * c_k * r_l
+        # print(k)
+        # return r_l/(k**2)
         return (1 + (w_n * c_k * r_l) ** 2) / (w_n ** 2 * c_k ** 2 * r_l)
 
     @property
@@ -54,7 +57,7 @@ class SimplifiedCapacitor(CapacitorCoupling):
     attributes:
         capacitance: The capacitance of the capacitor
     """
-    CAPACITANCE_RANGE = ValueRange(1e-16, 4e-15, 1e-13)  # Farad
+    CAPACITANCE_RANGE = ValueRange(1e-17, 4e-15, 7e-15, 1e-17)  # Farad
     def __init__(self,
                  resistence=CapacitorCoupling.RESISTANCE_RANGE.default,
                  capacitance=CAPACITANCE_RANGE.default):
@@ -95,7 +98,7 @@ class GapCapacitor(CapacitorCoupling):
 
     @property
     def capacitance(self):
-        return self.width * self.thickness / self.gap
+        return self.substrate.permittivity * self.width * self.thickness / self.gap
 
     @property
     def gap(self):
@@ -154,7 +157,7 @@ class FingerCapacitor(CapacitorCoupling):
 
     @property
     def capacitance(self):
-        return self.finger_length * self.finger_thickness * self.finger_count / self.finger_gap
+        return self.substrate.permittivity * self.finger_length * self.finger_thickness * self.finger_count / self.finger_gap
 
     @property
     def finger_length(self):

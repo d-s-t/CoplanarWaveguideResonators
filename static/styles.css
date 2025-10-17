@@ -1,0 +1,46 @@
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f7f9fb; color: #222; }
+.container { max-width: 1100px; margin: 2rem auto; padding: 1rem 1.5rem; background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.06); border-radius: 8px; }
+h1 { margin-top: 0; }
+
+/* Two-column layout: controls left, results right */
+.container.two-column { display: grid; grid-template-columns: 1fr 420px; gap: 1rem; align-items: start; }
+.left-column { width: 100%; }
+.right-column { width: 100%; }
+
+/* Make the selectors area responsive with three columns for the top row */
+.selectors.three-columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.selectors { display: block; }
+
+.selector { border: 1px solid #eef2f6; padding: 0.75rem; border-radius: 6px; background: #fcfdff; }
+.selector label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
+.selector select { width: 100%; padding: 0.4rem; }
+.params { margin-top: 0.5rem; }
+.param { margin-bottom: 0.5rem; }
+.param label { display: block; font-size: 0.85rem; margin-bottom: 0.25rem; }
+.param-controls { display:flex; gap:0.5rem; align-items: center; }
+.param-number { width: 100px; }
+.param-range { flex: 1; }
+
+/* Narrow styles for substrate sliders */
+.param-range.narrow-range { width: 140px; /* fixed narrower width */ }
+.param-number.narrow-number { width: 90px; }
+
+.actions { margin-top: 1rem; }
+button { background: #2b8cff; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; cursor: pointer; }
+button:hover { background: #1a73e8; }
+.results { margin-top: 0; }
+#outputs div { margin-bottom: 0.25rem; }
+#plot { background: #fff; border: 1px solid #eef2f6; border-radius: 6px; }
+
+/* Make getters visually separate */
+.getters { margin-top: 0.5rem; font-size: 0.85rem; color: #333; }
+
+/* Right column styling */
+.results-column .results { position: sticky; top: 1rem; }
+
+/* Responsive fallback */
+@media (max-width: 900px) {
+  .container.two-column { grid-template-columns: 1fr; }
+  .selectors.three-columns { grid-template-columns: 1fr; }
+  .param-range.narrow-range { width: 100%; }
+}

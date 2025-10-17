@@ -97,3 +97,18 @@ class Resonator:
         if not isinstance(value, Substrate):
             raise ValueError("Substrate must be an instance of Substrate")
         self.__substrate = value
+
+
+if __name__ == '__main__':
+    from transition_line import SimplifiedTransitionLine
+    from capacitor_coupling import GapCapacitor
+    from substrate import EffectiveSubstrate
+    coup_in = GapCapacitor()
+    coup_out = GapCapacitor()
+    line = SimplifiedTransitionLine()
+    sub = EffectiveSubstrate()
+    reson = Resonator(line, coup_in, coup_out, sub)
+    coup_in.gap=1e-6
+    print(reson.quality_factor_external(1))
+    coup_in.gap=1e-4
+    print(reson.quality_factor_external(1))

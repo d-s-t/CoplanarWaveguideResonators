@@ -8,7 +8,7 @@ class TransitionLine(ABC, metaclass=RangeCollectorMeta):
     An abstract base class representing a transition line.
     This class defines the interface for different types of transition lines.
     """
-    LENGTH_RANGE = ValueRange(5e-3, 1e-2, 4e-2)  # meters
+    LENGTH_RANGE = ValueRange(5e-3, 14.22e-3, 40e-3, 1e-5)  # meters
 
     @abstractmethod
     def __init__(self, length=LENGTH_RANGE.default):
@@ -223,8 +223,8 @@ class SimplifiedTransitionLine(TransitionLine):
         base_inductance: effective inductance as parallel LCR circuit
     """
     CAPACITANCE_RANGE = ValueRange(1e-15, 1e-14, 1e-12)  # Farad
-    RESISTANCE_RANGE = ValueRange(1, 100, 1e4)  # Ohm
-    BASE_INDUCTANCE_RANGE = ValueRange(1e-9, 1e-8, 1e-6)  # Henry
+    RESISTANCE_RANGE = ValueRange(0, 50, 100, 1)  # Ohm
+    BASE_INDUCTANCE_RANGE = ValueRange(1e-9, 1e-8, 1e-7, 1e-9)  # Henry
 
     def __init__(self,
                  length=TransitionLine.LENGTH_RANGE.default,
