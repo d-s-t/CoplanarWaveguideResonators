@@ -279,16 +279,36 @@ async function main() {
         sg.innerHTML = '';
         if (sg_sym) sg_sym.innerHTML = '';
 
-        if (data.getters.input_coupling && data.getters.input_coupling.capacitance !== undefined) {
+        // helper to render a numeric field
+        function appendNumeric(container, label, value) {
           const d = document.createElement('div');
-          d.textContent = 'capacitance: ' + Number(data.getters.input_coupling.capacitance).toExponential(3);
-          ig.appendChild(d);
+          let txt = label + ': ';
+          if (value === null || value === undefined) txt += '-';
+          else if (typeof value === 'number') txt += Number(value).toExponential(3);
+          else txt += String(value);
+          d.textContent = txt;
+          container.appendChild(d);
         }
-        if (data.getters.output_coupling && data.getters.output_coupling.capacitance !== undefined) {
-          const d = document.createElement('div');
-          d.textContent = 'capacitance: ' + Number(data.getters.output_coupling.capacitance).toExponential(3);
-          og.appendChild(d);
+
+        // input coupling getters
+        if (data.getters.input_coupling) {
+          const ic = data.getters.input_coupling;
+          if (ic.capacitance !== undefined) appendNumeric(ig, 'capacitance', ic.capacitance);
+          if (ic.parallel_resistance !== undefined) appendNumeric(ig, 'parallel_resistance', ic.parallel_resistance);
+          if (ic.parallel_resistance_approx !== undefined) appendNumeric(ig, 'parallel_resistance_approx', ic.parallel_resistance_approx);
+          if (ic.k_factor !== undefined) appendNumeric(ig, 'k_factor', ic.k_factor);
         }
+
+        // output coupling getters
+        if (data.getters.output_coupling) {
+          const oc = data.getters.output_coupling;
+          if (oc.capacitance !== undefined) appendNumeric(og, 'capacitance', oc.capacitance);
+          if (oc.parallel_resistance !== undefined) appendNumeric(og, 'parallel_resistance', oc.parallel_resistance);
+          if (oc.parallel_resistance_approx !== undefined) appendNumeric(og, 'parallel_resistance_approx', oc.parallel_resistance_approx);
+          if (oc.k_factor !== undefined) appendNumeric(og, 'k_factor', oc.k_factor);
+        }
+
+        // transition line getters
         if (data.getters.transition_line) {
           const tvals = data.getters.transition_line;
           Object.keys(tvals).forEach(k => {
@@ -298,6 +318,8 @@ async function main() {
             tg.appendChild(d);
           });
         }
+
+        // substrate getters
         if (data.getters.substrate) {
           const svals = data.getters.substrate;
           Object.keys(svals).forEach(k => {
@@ -307,11 +329,13 @@ async function main() {
             sg.appendChild(d);
           });
         }
-        // if symmetric, render symmetric getter too
-        if (symmetric && data.getters.input_coupling) {
-          const d = document.createElement('div');
-          d.textContent = 'capacitance: ' + Number(data.getters.input_coupling.capacitance).toExponential(3);
-          if (sg_sym) sg_sym.appendChild(d);
+        // if symmetric, render symmetric getter too (show same fields as coupling)
+        if (symmetric && data.getters.input_coupling && sg_sym) {
+          const ic = data.getters.input_coupling;
+          if (ic.capacitance !== undefined) appendNumeric(sg_sym, 'capacitance', ic.capacitance);
+          if (ic.parallel_resistance !== undefined) appendNumeric(sg_sym, 'parallel_resistance', ic.parallel_resistance);
+          if (ic.parallel_resistance_approx !== undefined) appendNumeric(sg_sym, 'parallel_resistance_approx', ic.parallel_resistance_approx);
+          if (ic.k_factor !== undefined) appendNumeric(sg_sym, 'k_factor', ic.k_factor);
         }
       }
 

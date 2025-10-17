@@ -165,6 +165,29 @@ def options():
     return jsonify(data)
 
 
+def _approx_parallel_resistance_for_capacitor(cap_inst, w_n):
+    try:
+        c_k = float(cap_inst.capacitance)
+        r_l = float(cap_inst.resistance)
+    except Exception:
+        return None
+    if w_n is None or w_n == 0 or c_k == 0:
+        return None
+    wcr = abs(w_n * c_k * r_l)
+    # low-frequency asymptote when wcr << 1: R_par ≈ 1/(w^2 C^2 R)
+    if wcr < 0.5:
+        return 1.0 / (w_n ** 2 * c_k ** 2 * r_l)
+    # high-frequency asymptote when wcr >> 1: R_par ≈ R
+    if wcr > 5:
+        return r_l
+    # intermediate: blend between the two asymptotes (log-linear interpolation)
+    # map wcr in [0.5,5] -> t in [0,1]
+    t = (math.log(wcr) - math.log(0.5)) / (math.log(5) - math.log(0.5))
+    low = 1.0 / (w_n ** 2 * c_k ** 2 * r_l)
+    high = r_l
+    return low * (1 - t) + high * t
+
+
 @app.route('/api/simulate', methods=['POST'])
 def simulate():
     _init_current_instances()
@@ -236,22 +259,39 @@ def simulate():
             except Exception:
                 f_n = None
 
+        # compute capacitances seen by resonator
+        c_line = None
+        c_in = None
+        c_out = None
+        try:
+            c_line = _current['transition_line'].parallel_capacitance
+        except Exception:
+            c_line = None
+        try:
+            c_in = _current['input_coupling'].parallel_capacitance(w_n) if w_n is not None else None
+        except Exception:
+            c_in = None
+        try:
+            c_out = _current['output_coupling'].parallel_capacitance(w_n) if w_n is not None else None
+        except Exception:
+            c_out = None
+
         q_i = reson.quality_factor_internal(n)
         q_e = reson.quality_factor_external(n)
         q_tot = reson.quality_factor(n)
 
-        # Build getters to return for UI display
+        # Build getters to return for UI display, extended for couplings
         getters = {
             'transition_line': {
-                'parallel_capacitance': getattr(_current['transition_line'], 'parallel_capacitance', None),
+                'parallel_capacitance': c_line,
                 'parallel_resistance': getattr(_current['transition_line'], 'parallel_resistance', None),
                 'parallel_inductance': None
             },
             'input_coupling': {
-                'capacitance': getattr(_current['input_coupling'], 'capacitance', None)
+                'capacitance': c_in
             },
             'output_coupling': {
-                'capacitance': getattr(_current['output_coupling'], 'capacitance', None)
+                'capacitance': c_out
             },
             'substrate': {
                 'permittivity': getattr(_current['substrate'], 'permittivity', None),
@@ -263,6 +303,45 @@ def simulate():
             getters['transition_line']['parallel_inductance'] = _current['transition_line'].parallel_inductance(n)
         except Exception:
             getters['transition_line']['parallel_inductance'] = None
+
+        # augment input/output getters with parallel_resistance, approximate and k_factor
+        total_c = None
+        try:
+            total_c = sum([v for v in (c_line, c_in, c_out) if v is not None])
+        except Exception:
+            total_c = None
+
+        # helper to safe compute parallel resistance and k
+        def coupling_getters(cap_inst, c_val):
+            out = {}
+            try:
+                if w_n is not None:
+                    # exact parallel resistance using existing method
+                    r_par = None
+                    try:
+                        r_par = cap_inst.parallel_resistance(w_n)
+                    except Exception:
+                        r_par = None
+                    out['parallel_resistance'] = r_par
+                    # approximate
+                    out['parallel_resistance_approx'] = _approx_parallel_resistance_for_capacitor(cap_inst, w_n)
+                # k-factor = coupling capacitance / total capacitance
+                if c_val is not None and total_c is not None and total_c != 0:
+                    out['k_factor'] = float(c_val) / float(total_c)
+                else:
+                    out['k_factor'] = None
+            except Exception:
+                pass
+            return out
+
+        try:
+            getters['input_coupling'].update(coupling_getters(_current['input_coupling'], c_in))
+        except Exception:
+            pass
+        try:
+            getters['output_coupling'].update(coupling_getters(_current['output_coupling'], c_out))
+        except Exception:
+            pass
 
         return jsonify({
             'w1': w_n,
