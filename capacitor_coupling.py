@@ -22,10 +22,15 @@ class CapacitorCoupling(ABC, metaclass=RangeCollectorMeta):
     def parallel_resistance(self, w_n):
         c_k = self.capacitance
         r_l = self.resistance
-        k = w_n * c_k * r_l
-        # print(k)
-        # return r_l/(k**2)
         return (1 + (w_n * c_k * r_l) ** 2) / (w_n ** 2 * c_k ** 2 * r_l)
+
+    def parallel_resonance_approx(self, w_n):
+        return self.resistance / (self.k_factor(w_n) ** 2)
+
+    def k_factor(self, w_n):
+        c_k = self.capacitance
+        r_l = self.resistance
+        return w_n * c_k * r_l
 
     @property
     def resistance(self):
