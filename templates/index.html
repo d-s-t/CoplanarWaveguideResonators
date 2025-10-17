@@ -9,39 +9,46 @@
 </head>
 <body>
   <div class="container two-column">
-    <h1>Resonator Simulator</h1>
+    <div class="header-row">
+      <h1>Resonator Simulator</h1>
+    </div>
 
-    <div class="left-column controls-column">
-      <!-- Top row: input, transition line, output (or symmetric single control) -->
-      <div class="selectors three-columns">
-        <div class="selector" id="input_container">
-          <label for="input_coupling_select">Input Coupling</label>
-          <select id="input_coupling_select"></select>
-          <div id="input_coupling_params" class="params"></div>
-          <div id="input_coupling_getters" class="getters"></div>
-        </div>
-
+    <div class="controls-column">
+      <!-- Top row: only transition line in the middle; left/right intentionally empty to keep layout -->
+      <div class="selectors">
         <div class="selector">
           <label for="transition_line_select">Transition Line</label>
           <select id="transition_line_select"></select>
           <div id="transition_line_params" class="params"></div>
           <div id="transition_line_getters" class="getters"></div>
         </div>
-
-        <div class="selector" id="output_container">
-          <label for="output_coupling_select">Output Coupling</label>
-          <select id="output_coupling_select"></select>
-          <div id="output_coupling_params" class="params"></div>
-          <div id="output_coupling_getters" class="getters"></div>
-        </div>
       </div>
 
-      <!-- Symmetric single-control container (hidden when symmetric is off) -->
-      <div class="selector" id="symmetric_container" style="display:none; margin-top:0.75rem;">
-        <label for="symmetric_coupling_select"><strong>Symmetric coupling</strong></label>
-        <select id="symmetric_coupling_select"></select>
-        <div id="symmetric_coupling_params" class="params"></div>
-        <div id="symmetric_coupling_getters" class="getters"></div>
+      <!-- Area below transition line: either symmetric single control OR stacked input & output controls -->
+      <div class="selectors" style="margin-top:0.75rem;">
+        <div class="selector" id="symmetric_container" style="display:block;">
+          <label for="symmetric_coupling_select">Symmetric coupling</label>
+          <select id="symmetric_coupling_select"></select>
+          <div id="symmetric_coupling_params" class="params"></div>
+          <div id="symmetric_coupling_getters" class="getters"></div>
+        </div>
+
+        <!-- Stacked input/output - placed in the same area as symmetric container and hidden when symmetric is on -->
+        <div id="input_output_stack" class="selectors two-columns">
+          <div class="selector" id="input_container" style="margin-bottom:0.5rem; display:none;">
+            <label for="input_coupling_select">Input Coupling</label>
+            <select id="input_coupling_select"></select>
+            <div id="input_coupling_params" class="params"></div>
+            <div id="input_coupling_getters" class="getters"></div>
+          </div>
+
+          <div class="selector" id="output_container" style="display:none;">
+            <label for="output_coupling_select">Output Coupling</label>
+            <select id="output_coupling_select"></select>
+            <div id="output_coupling_params" class="params"></div>
+            <div id="output_coupling_getters" class="getters"></div>
+          </div>
+        </div>
       </div>
 
       <!-- Symmetric coupling checkbox -->
@@ -59,7 +66,7 @@
           <div id="substrate_getters" class="getters"></div>
 
           <div style="margin-top:0.75rem;">
-            <label for="mode_n">Mode (n)</label>
+            <label for="mode_n_number">Mode (n)</label>
             <div id="mode_controls" class="params">
               <input id="mode_n_number" class="param-number" type="number" min="1" max="10" step="1" value="1">
               <input id="mode_n_range" class="param-range" type="range" min="1" max="10" step="1" value="1">
@@ -69,7 +76,7 @@
       </div>
     </div>
 
-    <div class="right-column results-column">
+    <div class="results-column">
       <div class="results">
         <h2>Results</h2>
         <div id="outputs">

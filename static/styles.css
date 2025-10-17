@@ -1,15 +1,23 @@
 body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f7f9fb; color: #222; }
-.container { max-width: 1100px; margin: 2rem auto; padding: 1rem 1.5rem; background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.06); border-radius: 8px; }
+
+/* outer container: no horizontal width limit and equal margins on all sides */
+.container { margin: 2rem; padding: 1rem 1.5rem; background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.06); border-radius: 8px; width: auto; }
+
+/* Two-column layout with explicit grid areas: header, controls (left), results (right) */
+.container.two-column { display: grid; grid-template-columns: 1fr 420px; grid-template-rows: auto 1fr; grid-template-areas: "header header" "controls results"; gap: 1rem; align-items: start; }
+.header-row { grid-area: header; }
+.header-row h1 { margin: 0 0 0.5rem 0; }
+.controls-column { grid-area: controls; min-width: 0; display:flex; flex-direction:column; gap:0.75rem; max-height: calc(100vh - 160px); overflow:auto; }
+.results-column { grid-area: results; min-width: 0; display:flex; flex-direction:column; gap:0.75rem; align-items:stretch; }
+
 h1 { margin-top: 0; }
 
-/* Two-column layout: controls left, results right */
-.container.two-column { display: grid; grid-template-columns: 1fr 420px; gap: 1rem; align-items: start; }
-.left-column { width: 100%; }
-.right-column { width: 100%; }
-
 /* Make the selectors area responsive with three columns for the top row */
-.selectors.three-columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.selectors.two-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 .selectors { display: block; }
+
+/* ensure selector children can shrink instead of forcing grid expansion */
+.selectors, .selectors .selector { min-width: 0; box-sizing: border-box; }
 
 .selector { border: 1px solid #eef2f6; padding: 0.75rem; border-radius: 6px; background: #fcfdff; }
 .selector label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
@@ -17,13 +25,13 @@ h1 { margin-top: 0; }
 .params { margin-top: 0.5rem; }
 .param { margin-bottom: 0.5rem; }
 .param label { display: block; font-size: 0.85rem; margin-bottom: 0.25rem; }
-.param-controls { display:flex; gap:0.5rem; align-items: center; }
+.param-controls { display:flex; gap:0.5rem; align-items: center; min-width: 0; }
 .param-number { width: 100px; }
 .param-range { flex: 1; }
 
 /* Narrow styles for substrate sliders */
-.param-range.narrow-range { width: 140px; /* fixed narrower width */ }
-.param-number.narrow-number { width: 90px; }
+.param-range.narrow-range { width: 120px; /* reduced width so sliders are shorter */ }
+.param-number.narrow-number { width: 80px; }
 
 .actions { margin-top: 1rem; }
 button { background: #2b8cff; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; cursor: pointer; }
@@ -40,7 +48,7 @@ button:hover { background: #1a73e8; }
 
 /* Responsive fallback */
 @media (max-width: 900px) {
-  .container.two-column { grid-template-columns: 1fr; }
+  .container.two-column { grid-template-columns: 1fr; grid-template-areas: "header" "controls" "results"; }
   .selectors.three-columns { grid-template-columns: 1fr; }
   .param-range.narrow-range { width: 100%; }
 }
