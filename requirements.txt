@@ -2,3 +2,4 @@ numpy
 plotly==6.3.1
 scipy
 Flask
+gunicorn
