@@ -297,6 +297,17 @@ def simulate():
         except Exception:
             getters['transition_line']['parallel_inductance'] = None
 
+        try:
+            getters['transition_line']['Q'] = _current['transition_line'].quality_factor(n)
+        except Exception:
+            getters['transition_line']['Q'] = None
+
+        try:
+            getters['transition_line'][f'f_{n}[GHz]'] = _current['transition_line'].resonance_frequency(n)/(math.pi*2e9)
+        except Exception:
+            getters['transition_line'][f'f_{n}[GHz]'] = None
+
+
         # augment input/output getters with parallel_resistance, approximate and k_factor
         total_c = None
         try:

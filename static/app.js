@@ -261,11 +261,11 @@ async function main() {
         return;
       }
 
-      document.getElementById('w1').textContent = (data.w1 !== null && data.w1 !== undefined) ? Number(data.w1).toExponential(3) : '-';
-      document.getElementById('f1').textContent = (data.f1 !== null && data.f1 !== undefined) ? Number(data.f1).toExponential(3) : '-';
-      document.getElementById('q_i').textContent = (data.q_internal !== null && data.q_internal !== undefined) ? Number(data.q_internal).toExponential(3) : '-';
-      document.getElementById('q_e').textContent = (data.q_external !== null && data.q_external !== undefined) ? Number(data.q_external).toExponential(3) : '-';
-      document.getElementById('q_tot').textContent = (data.q_total !== null && data.q_total !== undefined) ? Number(data.q_total).toExponential(3) : '-';
+      document.getElementById('w1').textContent = (data.w1 !== null && data.w1 !== undefined) ? Number(data.w1).toPrecision(3) : '-';
+      document.getElementById('f1').textContent = (data.f1 !== null && data.f1 !== undefined) ? Number(data.f1).toPrecision(3) : '-';
+      document.getElementById('q_i').textContent = (data.q_internal !== null && data.q_internal !== undefined) ? Number(data.q_internal).toPrecision(3) : '-';
+      document.getElementById('q_e').textContent = (data.q_external !== null && data.q_external !== undefined) ? Number(data.q_external).toPrecision(3) : '-';
+      document.getElementById('q_tot').textContent = (data.q_total !== null && data.q_total !== undefined) ? Number(data.q_total).toPrecision(3) : '-';
 
       const plotDiv = document.getElementById('plot');
       const qNames = ['Q_internal', 'Q_external', 'Q_total'];
@@ -294,7 +294,7 @@ async function main() {
           const d = document.createElement('div');
           let txt = label + ': ';
           if (value === null || value === undefined) txt += '-';
-          else if (typeof value === 'number') txt += Number(value).toExponential(3);
+          else if (typeof value === 'number') txt += Number(value).toPrecision(3);
           else txt += String(value);
           d.textContent = txt;
           container.appendChild(d);
@@ -324,7 +324,7 @@ async function main() {
           Object.keys(tvals).forEach(k => {
             const v = tvals[k];
             const d = document.createElement('div');
-            d.textContent = k + ': ' + (v === null || v === undefined ? '-' : (typeof v === 'number' ? Number(v).toExponential(3) : String(v)));
+            d.textContent = k + ': ' + (v === null || v === undefined ? '-' : (typeof v === 'number' ? Number(v).toPrecision(3) : String(v)));
             tg.appendChild(d);
           });
         }
@@ -335,7 +335,7 @@ async function main() {
           Object.keys(svals).forEach(k => {
             const v = svals[k];
             const d = document.createElement('div');
-            d.textContent = k + ': ' + (v === null || v === undefined ? '-' : (typeof v === 'number' ? Number(v).toExponential(3) : String(v)));
+            d.textContent = k + ': ' + (v === null || v === undefined ? '-' : (typeof v === 'number' ? Number(v).toPrecision(3) : String(v)));
             sg.appendChild(d);
           });
         }
