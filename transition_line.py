@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from substrate import Substrate
 from scipy import constants
+from scipy.special import ellipk
 from utilies import ValueRange, RangeCollectorMeta
 
 class TransitionLine(ABC, metaclass=RangeCollectorMeta):
@@ -142,12 +143,22 @@ class GeometricTransitionLine(TransitionLine):
 
     @property
     def capacitance_per_length(self):
-        return self.substrate.permittivity * self.thickness / self.separation
+        er = self._ellipk_ratio()
+        permittivity = self.substrate.permittivity if self.substrate else constants.epsilon_0
+        return 4 * permittivity * er
 
     @property
     def inductance_per_length(self):
-        # Caution: This formula may not be correct at all...
-        return self.substrate.permeability * 2 * self.separation / self.thickness
+        er = self._ellipk_ratio()
+        permeability = self.substrate.permeability if self.substrate else constants.mu_0
+        return permeability / (4 * er)
+
+    def _ellipk_ratio(self):
+        k_0 = self.width / (self.width + 2 * self.separation)
+        k_0p = (1 - k_0**2) ** 0.5
+        el = ellipk(k_0)
+        el_p = ellipk(k_0p)
+        return el / el_p
 
 class DistributedTransitionLine(TransitionLine):
     """
@@ -159,7 +170,7 @@ class DistributedTransitionLine(TransitionLine):
         attenuation_constant: attenuation constant
     """
     CAPACITANCE_PER_LENGTH_RANGE = ValueRange(1e-12, 1e-11, 1e-10)  # F/m
-    INDUCTANCE_PER_LENGTH_RANGE = ValueRange(1e-7, 1e-6, 1e-5)  # H/m
+    INDUCTANCE_PER_LENGTH_RANGE = ValueRange(1e-10, 1e-6, 1e-5)  # H/m
     ATTENUATION_CONSTANT_RANGE = ValueRange(0, 0.1, 1)  # Neper/m
 
     def __init__(self,
