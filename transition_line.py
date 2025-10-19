@@ -9,7 +9,7 @@ class TransitionLine(ABC, metaclass=RangeCollectorMeta):
     An abstract base class representing a transition line.
     This class defines the interface for different types of transition lines.
     """
-    LENGTH_RANGE = ValueRange(5e-3, 14.22e-3, 40e-3, 1e-5)  # meters
+    LENGTH_RANGE = ValueRange(5e-3, 28.449e-3, 40e-3, 1e-5)  # meters
 
     @abstractmethod
     def __init__(self, length=LENGTH_RANGE.default):
@@ -77,23 +77,26 @@ class GeometricTransitionLine(TransitionLine):
     WIDTH_RANGE = ValueRange(1e-6, 1e-5, 2e-5)
     SEPARATION_RANGE = ValueRange(1e-6, 1e-5, 2e-5)
     THICKNESS_RANGE = ValueRange(1e-7, 2e-7, 4e-7)
-    RESISTANCE_PER_LENGTH_RANGE = ValueRange(0, 1, 10)  # Ohm/meter
+    ATTENUATION_CONSTANT_RANGE = ValueRange(0, 2.4e-4, 1e-3)  # Neper/m
 
     def __init__(self,
                  length=TransitionLine.LENGTH_RANGE.default,
                  width=WIDTH_RANGE.default,
                  separation=SEPARATION_RANGE.default,
                  thickness=THICKNESS_RANGE.default,
-                 resistance_per_length=RESISTANCE_PER_LENGTH_RANGE.default):
+                 attenuation_constant=ATTENUATION_CONSTANT_RANGE.default):
         super().__init__(length)
         self.width = width
         self.separation = separation
         self.thickness = thickness
-        self.resistance_per_length = resistance_per_length
+        self.attenuation_constant = attenuation_constant
 
     @property
     def parallel_resistance(self):
-        return self.resistance_per_length * self.length
+        return self._z0() / (self.attenuation_constant * self.length)
+
+    def _z0(self):
+        return (self.inductance_per_length / self.capacitance_per_length) ** 0.5
 
     def parallel_inductance(self, n):
         return 2 * self.inductance_per_length * self.length / (n**2 * constants.pi**2)
@@ -133,13 +136,14 @@ class GeometricTransitionLine(TransitionLine):
         self.__thickness = value
 
     @property
-    def resistance_per_length(self):
-        return self.__resistance_per_length
-    @resistance_per_length.setter
-    def resistance_per_length(self, value):
+    def attenuation_constant(self):
+        return self.__attenuation_constant
+
+    @attenuation_constant.setter
+    def attenuation_constant(self, value):
         if value < 0:
-            raise ValueError("Resistance per length must be non-negative")
-        self.__resistance_per_length = value
+            raise ValueError("Attenuation constant must be non-negative")
+        self.__attenuation_constant = value
 
     @property
     def capacitance_per_length(self):
@@ -171,7 +175,7 @@ class DistributedTransitionLine(TransitionLine):
     """
     CAPACITANCE_PER_LENGTH_RANGE = ValueRange(1e-12, 1e-11, 1e-10)  # F/m
     INDUCTANCE_PER_LENGTH_RANGE = ValueRange(1e-10, 1e-6, 1e-5)  # H/m
-    ATTENUATION_CONSTANT_RANGE = ValueRange(0, 0.1, 1)  # Neper/m
+    ATTENUATION_CONSTANT_RANGE = ValueRange(0, 2.4e-4, 1e-3)  # Neper/m
 
     def __init__(self,
                  length=TransitionLine.LENGTH_RANGE.default,
