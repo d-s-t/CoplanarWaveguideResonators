@@ -117,13 +117,14 @@ function renderParamsFor(category, selectEl, paramsContainerEl, optionsMap, onCh
   });
 }
 
-function buildSelector(map, selectEl) {
+function buildSelector(map, selectEl, defaultValue) {
   Object.keys(map).forEach(k => {
     const opt = document.createElement('option');
     opt.value = k;
     opt.textContent = k; // remove class name from label
     selectEl.appendChild(opt);
   });
+  selectEl.value = defaultValue || selectEl.options[0].value;
 }
 
 // collect parameter values from a params container (reads .param-number inputs)
@@ -183,11 +184,11 @@ async function main() {
   const ioStack = document.getElementById('input_output_stack');
   const symmetricSelect = document.getElementById('symmetric_coupling_select');
   const symmetricParamsContainer = document.getElementById('symmetric_coupling_params');
-  buildSelector(opts.transition_lines, tSelect);
-  buildSelector(opts.capacitor_couplings, inSelect);
-  buildSelector(opts.capacitor_couplings, outSelect);
-  buildSelector(opts.capacitor_couplings, symmetricSelect);
-  buildSelector(opts.substrates, sSelect);
+  buildSelector(opts.transition_lines, tSelect, opts.defaults.transition_line);
+  buildSelector(opts.capacitor_couplings, inSelect, opts.defaults.capacitor_couplings);
+  buildSelector(opts.capacitor_couplings, outSelect, opts.defaults.capacitor_couplings);
+  buildSelector(opts.capacitor_couplings, symmetricSelect, opts.defaults.capacitor_couplings);
+  buildSelector(opts.substrates, sSelect, opts.defaults.substrate);
 
   // set defaults without resetting other selections
   if (opts.defaults) {

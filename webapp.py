@@ -88,7 +88,7 @@ def _update_instance_attributes(inst, params):
 def _init_current_instances():
     # initialize module globals with default component instances
     if _current['transition_line'] is None:
-        tname = next(iter(TransitionLines.keys()))
+        tname = 'geometric' if 'geometric' in TransitionLines else next(iter(TransitionLines.keys()))
         iname = 'simplified' if 'simplified' in CapacitorCouplings else next(iter(CapacitorCouplings.keys()))
         oname = 'simplified' if 'simplified' in CapacitorCouplings else next(iter(CapacitorCouplings.keys()))
         sname = next(iter(Substrates.keys()))
@@ -132,15 +132,13 @@ def options():
     data = {'transition_lines': {}, 'capacitor_couplings': {}, 'substrates': {}, 'defaults': {}}
 
     # Prefer 'simplified' for capacitors if present
-    default_t = next(iter(TransitionLines.keys()))
+    default_t = 'geometric' if 'geometric' in TransitionLines else next(iter(TransitionLines.keys()))
     default_s = next(iter(Substrates.keys()))
-    default_in = 'simplified' if 'simplified' in CapacitorCouplings else next(iter(CapacitorCouplings.keys()))
-    default_out = 'simplified' if 'simplified' in CapacitorCouplings else next(iter(CapacitorCouplings.keys()))
+    default_c = 'simplified' if 'simplified' in CapacitorCouplings else next(iter(CapacitorCouplings.keys()))
 
     data['defaults'] = {
         'transition_line': default_t,
-        'input_coupling': default_in,
-        'output_coupling': default_out,
+        'capacitor_couplings': default_c,
         'substrate': default_s
     }
 
