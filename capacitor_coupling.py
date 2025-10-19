@@ -7,7 +7,7 @@ class CapacitorCoupling(ABC, metaclass=RangeCollectorMeta):
     An abstract base class representing a coupling mechanism.
     This class defines the interface for different types of couplings.
     """
-    RESISTANCE_RANGE = ValueRange(10, 50, 100, 1)  # Ohm
+    RESISTANCE_RANGE = ValueRange(10, 30, 50, .1)  # Ohm
 
     @abstractmethod
     def __init__(self, resistence):
@@ -62,7 +62,7 @@ class SimplifiedCapacitor(CapacitorCoupling):
     attributes:
         capacitance: The capacitance of the capacitor
     """
-    CAPACITANCE_RANGE = ValueRange(1e-17, 4e-15, 7e-15, 1e-17)  # Farad
+    CAPACITANCE_RANGE = ValueRange(1e-17, 4e-15, 7e-14, 1e-17)  # Farad
     def __init__(self,
                  resistence=CapacitorCoupling.RESISTANCE_RANGE.default,
                  capacitance=CAPACITANCE_RANGE.default):
