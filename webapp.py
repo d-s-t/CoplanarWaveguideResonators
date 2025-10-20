@@ -3,6 +3,7 @@ from factory import TransitionLines, CapacitorCouplings, Substrates
 from resonator import Resonator
 import math
 import inspect
+import numpy as np
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
@@ -46,6 +47,55 @@ def _instantiate_with_params(cls, params):
         inst = cls()
         _update_instance_attributes(inst, params)
         return inst
+
+
+def res_vs_length_data(resonator, n, num_points=50):
+    original_length = resonator.transition_line.length
+    length_range = resonator.transition_line.LENGTH_RANGE
+    x_data = resonator.transition_line.length = np.linspace(length_range.min, length_range.max, num_points)
+    w_res = resonator.resonance_frequency(n)
+    y_data = w_res / (2 * math.pi)
+    resonator.transition_line.length = original_length  # restore
+    plot_data = {'x': list(x_data), 'y': list(y_data), 'x_label': 'Transition Line Length (m)', 'y_label': 'Resonance Frequency (Hz)'}
+    return plot_data
+
+
+def res_vs_coupling_data(resonator, n, num_points=50):
+    in_coupling = resonator.input_coupling
+    out_coupling = resonator.output_coupling
+
+    coupling = resonator.input_coupling = resonator.output_coupling = CapacitorCouplings['simplified']()
+    coupling.capacitance = np.linspace(coupling.CAPACITANCE_RANGE.min, coupling.CAPACITANCE_RANGE.max, num_points)
+    w_res = resonator.resonance_frequency(n)
+    y_data = w_res / (2 * math.pi)
+    resonator.input_coupling = in_coupling
+    resonator.output_coupling = out_coupling
+    plot_data = {'x': list(coupling.capacitance), 'y': list(y_data), 'x_label': 'Coupling Capacitance (F)', 'y_label': 'Resonance Frequency (Hz)'}
+    return plot_data
+
+def lorentzian_data(resonator, n, points=400, **kwargs):
+    w_0 = resonator.resonance_frequency(n)
+    f0 = w_0 / (2 * math.pi) if w_0 else 0
+    q_tot = resonator.quality_factor(n)
+    df = f0 / q_tot
+    span = 6 * df  # A reasonable span is a few linewidths
+    f_min, f_max = f0 - span / 2, f0 + span / 2
+    freqs = np.linspace(f_min, f_max, points)
+    
+    q_e = resonator.quality_factor_external(n)
+    s21_mag_db = []
+    s21 = 1 - (q_tot / q_e) / (1 + 2j * q_tot * (freqs - f0) / f0)
+    s21_mag_db = 20 * np.log10(abs(s21))
+
+    plot_data = {'x': list(freqs), 'y': list(s21_mag_db), 'x_label': 'Frequency (Hz)', 'y_label': 'S21 (dB)'}
+    return plot_data
+
+
+plot_data_mapping = {
+    'res_vs_length': res_vs_length_data,
+    'res_vs_coupling': res_vs_coupling_data,
+    'lorentzian': lorentzian_data
+}
 
 
 def _find_candidate_attribute(inst, key):
@@ -191,6 +241,7 @@ def simulate():
     _init_current_instances()
 
     payload = request.get_json(force=True)
+    plot_type = payload.get('plot_type', 'quality_factors')
     try:
         # selections from payload; if missing, keep current selection
         t_name = payload.get('transition_line') or _current['selection']['transition_line']
@@ -240,6 +291,9 @@ def simulate():
 
         # Build resonator from current instances
         reson = Resonator(_current['transition_line'], _current['input_coupling'], _current['output_coupling'], _current['substrate'])
+
+        # --- Plot data generation ---
+        plot_data = plot_data_mapping[plot_type](reson, n) if plot_type in plot_data_mapping else {}
 
         # compute for requested n
         w_n = reson.resonance_frequency(n)
@@ -352,6 +406,7 @@ def simulate():
             'q_external': q_e,
             'q_total': q_tot,
             'getters': getters,
+            'plot_data': plot_data,
             'selection': _current['selection']
         })
 

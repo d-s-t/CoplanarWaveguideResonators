@@ -88,7 +88,21 @@
         </div>
       </div>
 
-      <div id="plot" style="width:100%;height:400px;margin-top:1rem;"></div>
+      <div class="plot-container">
+        <div class="plot-tabs">
+          <button class="plot-tab-button active" data-plottype="quality_factors">Quality Factors</button>
+          <button class="plot-tab-button" data-plottype="res_vs_length">Resonance vs Length</button>
+          <button class="plot-tab-button" data-plottype="res_vs_coupling">Resonance vs Coupling</button>
+          <button class="plot-tab-button" data-plottype="lorentzian">Lorentzian</button>
+        </div>
+        <div class="plot-wrapper">
+          <div id="plot" style="width:100%;height:350px;"></div>
+          <div id="lorentzian_controls">
+            <button id="save_lorentzian_btn">Save Current Trace</button>
+            <button id="clear_lorentzian_btn">Clear Saved Traces</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

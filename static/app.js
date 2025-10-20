@@ -162,6 +162,10 @@ function copyParamValues(srcContainer, dstContainer) {
     }
   });
 }
+
+let currentPlotType = 'quality_factors';
+let lorentzianTraces = [];
+
 async function main() {
   let opts;
   try {
@@ -207,6 +211,11 @@ async function main() {
   const modeNumber = document.getElementById('mode_n_number');
   const modeRange = document.getElementById('mode_n_range');
 
+  const plotTabs = document.querySelectorAll('.plot-tab-button');
+  const lorentzianControls = document.getElementById('lorentzian_controls');
+  const saveLorentzianBtn = document.getElementById('save_lorentzian_btn');
+  const clearLorentzianBtn = document.getElementById('clear_lorentzian_btn');
+
   // schedule simulation with debounce
   const doSimulate = debounce(async () => {
     const n = parseInt(modeNumber.value) || 1;
@@ -248,6 +257,7 @@ async function main() {
       output_coupling_params: outputParams,
       substrate_params: substrateParams,
       n: n,
+      plot_type: currentPlotType,
     };
 
     try {
@@ -268,13 +278,43 @@ async function main() {
       document.getElementById('q_e').textContent = (data.q_external !== null && data.q_external !== undefined) ? Number(data.q_external).toPrecision(3) : '-';
       document.getElementById('q_tot').textContent = (data.q_total !== null && data.q_total !== undefined) ? Number(data.q_total).toPrecision(3) : '-';
 
+      // --- Plotting ---
       const plotDiv = document.getElementById('plot');
-      const qNames = ['Q_internal', 'Q_external', 'Q_total'];
-      const qVals = [data.q_internal || 0, data.q_external || 0, data.q_total || 0];
+      let traces = [];
+      let layout = { title: 'Plot', yaxis: {title: 'Y'}, xaxis: {title: 'X'}, margin: { l: 50, r: 20, t: 30, b: 40 } };
 
-      const trace = { x: qNames, y: qVals, type: 'bar' };
-      const layout = { title: 'Quality Factors', yaxis: {title: 'Q'} };
-      if (window.Plotly) Plotly.newPlot(plotDiv, [trace], layout, {responsive: true});
+      if (currentPlotType === 'quality_factors') {
+        const qNames = ['Q_internal', 'Q_external', 'Q_total'];
+        const qVals = [data.q_internal || 0, data.q_external || 0, data.q_total || 0];
+        traces.push({ x: qNames, y: qVals, type: 'bar' });
+        layout.title = 'Quality Factors';
+        layout.yaxis.title = 'Q';
+        layout.xaxis.title = '';
+      } else if (data.plot_data && data.plot_data.x && data.plot_data.y) {
+        const currentTrace = {
+          x: data.plot_data.x,
+          y: data.plot_data.y,
+          type: 'scatter',
+          mode: 'lines',
+          name: 'Current'
+        };
+        layout.title = data.plot_data.y_label + ' vs ' + data.plot_data.x_label;
+        layout.xaxis.title = data.plot_data.x_label;
+        layout.yaxis.title = data.plot_data.y_label;
+
+        if (currentPlotType === 'lorentzian') {
+          traces = [...lorentzianTraces, currentTrace];
+          layout.title = 'Lorentzian Profile (S21)';
+        } else {
+          traces.push(currentTrace);
+        }
+      }
+
+      if (window.Plotly) {
+        Plotly.react(plotDiv, traces, layout, {responsive: true});
+      }
+
+
 
       // render getters under each component
       if (data.getters) {
@@ -433,6 +473,37 @@ async function main() {
   modeRange.addEventListener('input', () => {
     modeNumber.value = modeRange.value; doSimulate();
   });
+
+  // Plot tab logic
+  plotTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      plotTabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentPlotType = tab.dataset.plottype;
+      if (currentPlotType === 'lorentzian') {
+        lorentzianControls.classList.add('visible');
+      } else {
+        lorentzianControls.classList.remove('visible');
+      }
+      const resVsCouplingTab = document.querySelector('[data-plottype="res_vs_coupling"]');
+      if (resVsCouplingTab) {
+        resVsCouplingTab.disabled = !symmetricCheckbox.checked;
+        if (!symmetricCheckbox.checked && currentPlotType === 'res_vs_coupling') {
+            document.querySelector('[data-plottype="quality_factors"]').click();
+        }
+      }
+      doSimulate();
+    });
+  });
+
+  saveLorentzianBtn.addEventListener('click', () => {
+    const currentTrace = document.getElementById('plot').data.find(t => t.name === 'Current');
+    if (currentTrace) {
+      lorentzianTraces.push({ ...currentTrace, name: `Saved ${lorentzianTraces.length + 1}` });
+      doSimulate(); // re-render plot with saved trace
+    }
+  });
+  clearLorentzianBtn.addEventListener('click', () => { lorentzianTraces = []; doSimulate(); });
 
   renderAll();
 }
