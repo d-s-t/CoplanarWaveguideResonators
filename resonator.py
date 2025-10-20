@@ -70,6 +70,7 @@ class Resonator:
         if not isinstance(value, TransitionLine):
             raise ValueError("Transition line must be an instance of TransitionLine")
         self.__transition_line = value
+        value.substrate = self.substrate
 
     @property
     def input_coupling(self):
@@ -79,6 +80,7 @@ class Resonator:
         if not isinstance(value, CapacitorCoupling):
             raise ValueError("Input coupling must be an instance of CapacitorCoupling")
         self.__input_coupling = value
+        value.substrate = self.substrate
 
     @property
     def output_coupling(self):
@@ -88,6 +90,7 @@ class Resonator:
         if not isinstance(value, CapacitorCoupling):
             raise ValueError("Output coupling must be an instance of CapacitorCoupling")
         self.__output_coupling = value
+        value.substrate = self.substrate 
 
     @property
     def substrate(self):
@@ -97,6 +100,9 @@ class Resonator:
         if not isinstance(value, Substrate):
             raise ValueError("Substrate must be an instance of Substrate")
         self.__substrate = value
+        self.transition_line.substrate = value
+        self.input_coupling.substrate = value
+        self.output_coupling.substrate = value
 
 
 if __name__ == '__main__':

@@ -3,6 +3,7 @@ from substrate import Substrate
 from scipy import constants
 from scipy.special import ellipk
 from utilies import ValueRange, RangeCollectorMeta
+import numpy as np
 
 class TransitionLine(ABC, metaclass=RangeCollectorMeta):
     """
@@ -46,7 +47,7 @@ class TransitionLine(ABC, metaclass=RangeCollectorMeta):
 
     @length.setter
     def length(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Length must be positive")
         self.__length = value
 
@@ -111,7 +112,7 @@ class GeometricTransitionLine(TransitionLine):
 
     @width.setter
     def width(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Width must be positive")
         self.__width = value
 
@@ -121,7 +122,7 @@ class GeometricTransitionLine(TransitionLine):
 
     @separation.setter
     def separation(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Separation must be positive")
         self.__separation = value
 
@@ -131,7 +132,7 @@ class GeometricTransitionLine(TransitionLine):
 
     @thickness.setter
     def thickness(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Thickness must be positive")
         self.__thickness = value
 
@@ -141,7 +142,7 @@ class GeometricTransitionLine(TransitionLine):
 
     @attenuation_constant.setter
     def attenuation_constant(self, value):
-        if value < 0:
+        if np.any(value < 0):
             raise ValueError("Attenuation constant must be non-negative")
         self.__attenuation_constant = value
 
@@ -206,7 +207,7 @@ class DistributedTransitionLine(TransitionLine):
         return self.__capacitance_per_length
     @capacitance_per_length.setter
     def capacitance_per_length(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Capacitance per length must be positive")
         self.__capacitance_per_length = value
 
@@ -215,7 +216,7 @@ class DistributedTransitionLine(TransitionLine):
         return self.__inductance_per_length
     @inductance_per_length.setter
     def inductance_per_length(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Inductance per length must be positive")
         self.__inductance_per_length = value
 
@@ -224,7 +225,7 @@ class DistributedTransitionLine(TransitionLine):
         return self.__attenuation_constant
     @attenuation_constant.setter
     def attenuation_constant(self, value):
-        if value < 0:
+        if np.any(value < 0):
             raise ValueError("Attenuation constant must be non-negative")
         self.__attenuation_constant = value
 
@@ -267,7 +268,7 @@ class SimplifiedTransitionLine(TransitionLine):
         return self.__capacitance
     @capacitance.setter
     def capacitance(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Capacitance must be positive")
         self.__capacitance = value
 
@@ -276,7 +277,7 @@ class SimplifiedTransitionLine(TransitionLine):
         return self.__resistance
     @resistance.setter
     def resistance(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Resistance must be positive")
         self.__resistance = value
 
@@ -285,7 +286,7 @@ class SimplifiedTransitionLine(TransitionLine):
         return self.__base_inductance
     @base_inductance.setter
     def base_inductance(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Base inductance must be positive")
         self.__base_inductance = value
 

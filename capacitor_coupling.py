@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from substrate import Substrate
 from utilies import ValueRange, RangeCollectorMeta
+import numpy as np
 
 class CapacitorCoupling(ABC, metaclass=RangeCollectorMeta):
     """
@@ -37,7 +38,7 @@ class CapacitorCoupling(ABC, metaclass=RangeCollectorMeta):
         return self.__resistance
     @resistance.setter
     def resistance(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Resistance must be positive")
         self.__resistance = value
 
@@ -74,7 +75,7 @@ class SimplifiedCapacitor(CapacitorCoupling):
         return self.__capacitance
     @capacitance.setter
     def capacitance(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Capacitance must be positive")
         self.__capacitance = value
 
@@ -110,7 +111,7 @@ class GapCapacitor(CapacitorCoupling):
         return self.__gap
     @gap.setter
     def gap(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Gap must be positive")
         self.__gap = value
 
@@ -119,7 +120,7 @@ class GapCapacitor(CapacitorCoupling):
         return self.__width
     @width.setter
     def width(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Width must be positive")
         self.__width = value
 
@@ -128,7 +129,7 @@ class GapCapacitor(CapacitorCoupling):
         return self.__thickness
     @thickness.setter
     def thickness(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Thickness must be positive")
         self.__thickness = value
 
@@ -169,7 +170,7 @@ class FingerCapacitor(CapacitorCoupling):
         return self.__finger_length
     @finger_length.setter
     def finger_length(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Finger length must be positive")
         self.__finger_length = value
 
@@ -178,7 +179,7 @@ class FingerCapacitor(CapacitorCoupling):
         return self.__finger_thickness
     @finger_thickness.setter
     def finger_thickness(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Finger thickness must be positive")
         self.__finger_thickness = value
 
@@ -187,7 +188,7 @@ class FingerCapacitor(CapacitorCoupling):
         return self.__finger_count
     @finger_count.setter
     def finger_count(self, value: int):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Finger count must be positive")
         self.__finger_count = value
 
@@ -196,7 +197,7 @@ class FingerCapacitor(CapacitorCoupling):
         return self.__finger_gap
     @finger_gap.setter
     def finger_gap(self, value):
-        if value <= 0:
+        if np.any(value <= 0):
             raise ValueError("Finger gap must be positive")
         self.__finger_gap = value
 
