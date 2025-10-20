@@ -13,9 +13,7 @@ class Resonator:
                  output_coupling: CapacitorCoupling,
                  substrate: Substrate
                  ):
-        transition_line.substrate = substrate
-        input_coupling.substrate = substrate
-        output_coupling.substrate = substrate
+        self.substrate = None
         self.transition_line = transition_line
         self.input_coupling = input_coupling
         self.output_coupling = output_coupling
@@ -97,9 +95,11 @@ class Resonator:
         return self.__substrate
     @substrate.setter
     def substrate(self, value):
-        if not isinstance(value, Substrate):
+        if value is not None and not isinstance(value, Substrate):
             raise ValueError("Substrate must be an instance of Substrate")
         self.__substrate = value
+        if value is None:
+            return
         self.transition_line.substrate = value
         self.input_coupling.substrate = value
         self.output_coupling.substrate = value
