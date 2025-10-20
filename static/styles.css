@@ -81,11 +81,13 @@ button:hover { background: #1a73e8; }
   border-radius: 6px;
   overflow: hidden; 
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 #plot {
   background: #fff;
-  height: 350px;
+  height: 100%;
 }
 
 /* Plot tabs styling */
@@ -119,4 +121,11 @@ button:hover { background: #1a73e8; }
   .container.two-column { grid-template-columns: 1fr; grid-template-areas: "header" "controls" "results"; }
   .selectors.three-columns { grid-template-columns: 1fr; }
   .param-range.narrow-range { width: 100%; }
+}
+
+.symmetric-checkbox-container {
+  margin: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }

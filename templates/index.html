@@ -15,20 +15,16 @@
     </div>
 
     <div class="controls-column scrollable-column">
-      <!-- Top row: only transition line in the middle; left/right intentionally empty to keep layout -->
-      <div class="selectors">
-        <div class="selector">
-          <label for="transition_line_select">Transition Line</label>
-          <select id="transition_line_select"></select>
-          <div id="transition_line_params" class="params"></div>
-          <div id="transition_line_getters" class="getters"></div>
-        </div>
+      <!-- Symmetric coupling checkbox -->
+      <div class="symmetric-checkbox-container">
+        <input type="checkbox" id="symmetric_checkbox" checked>
+        <label for="symmetric_checkbox">Symmetric coupling</label>
       </div>
 
-      <!-- Area below transition line: either symmetric single control OR stacked input & output controls -->
-      <div class="selectors" style="margin-top:0.75rem;">
+      <!-- Coupling controls: either symmetric single control OR stacked input & output controls -->
+      <div class="selectors">
         <div class="selector" id="symmetric_container" style="display:block;">
-          <label for="symmetric_coupling_select">Symmetric coupling</label>
+          <label for="symmetric_coupling_select">Symmetric Coupling</label>
           <select id="symmetric_coupling_select"></select>
           <div id="symmetric_coupling_params" class="params"></div>
           <div id="symmetric_coupling_getters" class="getters"></div>
@@ -52,13 +48,18 @@
         </div>
       </div>
 
-      <!-- Symmetric coupling checkbox -->
-      <div style="margin:8px 0; display:flex; gap:8px; align-items:center;">
-        <input type="checkbox" id="symmetric_checkbox" checked>
-        <label for="symmetric_checkbox">Symmetric coupling</label>
+      <!-- Transition line controls -->
+      <div class="selectors">
+        <div class="selector">
+          <label for="transition_line_select">Transition Line</label>
+          <select id="transition_line_select"></select>
+          <div id="transition_line_params" class="params"></div>
+          <div id="transition_line_getters" class="getters"></div>
+        </div>
       </div>
 
-      <!-- Below: substrate and mode -->
+
+      <!-- Substrate controls -->
       <div class="selectors">
         <div class="selector" style="grid-column: 1 / -1;">
           <label for="substrate_select">Substrate</label>
