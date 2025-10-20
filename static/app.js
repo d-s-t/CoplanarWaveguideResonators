@@ -215,6 +215,7 @@ async function main() {
   const lorentzianControls = document.getElementById('lorentzian_controls');
   const saveLorentzianBtn = document.getElementById('save_lorentzian_btn');
   const clearLorentzianBtn = document.getElementById('clear_lorentzian_btn');
+  const swapColumnsBtn = document.getElementById('swap_columns_btn');
 
   // schedule simulation with debounce
   const doSimulate = debounce(async () => {
@@ -504,6 +505,22 @@ async function main() {
     }
   });
   clearLorentzianBtn.addEventListener('click', () => { lorentzianTraces = []; doSimulate(); });
+
+  // Swap columns button
+  swapColumnsBtn.addEventListener('click', () => {
+    const container = document.querySelector('.container.two-column');
+    container.classList.toggle('layout-swapped');
+
+    // change the max-height of the control panel to match the new height
+    const controls = document.querySelector('.controls-column')
+    const results = document.querySelector('.results');
+    const resultsHeight = results.clientHeight;
+    const gap = window.getComputedStyle(container).gap
+    controls.style.maxHeight = "calc(100vh - " + resultsHeight + "px - 120px - " + gap + ")";
+
+    // After the CSS transition, tell Plotly to resize.
+    Plotly.Plots.resize(document.getElementById('plot'));
+  });
 
   renderAll();
 }

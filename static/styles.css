@@ -4,11 +4,38 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f7f9f
 .container { margin: 1rem; padding: 1rem 1.5rem; background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.06); border-radius: 8px; width: auto; }
 
 /* Two-column layout with explicit grid areas: header, controls (left), results (right) */
-.container.two-column { display: grid; grid-template-columns: 1fr 420px; grid-template-rows: auto 1fr; grid-template-areas: "header header" "controls results"; gap: 1rem; align-items: start; }
-.header-row { grid-area: header; }
-.header-row h1 { margin: 0 0 0.5rem 0; }
-.controls-column { grid-area: controls; min-width: 0; display:flex; flex-direction:column; gap:0.75rem; max-height: calc(100vh - 130px); overflow:auto; }
-.results-column { grid-area: results; min-width: 0; display:flex; flex-direction:column; gap:0.75rem; align-items:stretch; }
+.container.two-column {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  grid-template-rows: auto auto 1fr;
+  grid-template-areas: "header header" "controls results" "controls plot";
+  gap: 1rem;
+  align-items: start;
+}
+.container.two-column.layout-swapped {
+  grid-template-areas: "header header" "plot results" "plot controls";
+}
+.header-row { grid-area: header; display: flex; justify-content: space-between; align-items: center; }
+.header-row h1 { margin: 0; }
+.controls-column {
+  grid-area: controls;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: calc(100vh - 120px); /* Make it scrollable in the left column */
+  overflow: auto;
+}
+.results { grid-area: results; }
+.plot-column { 
+  grid-area: plot;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-items: stretch;
+  height: 100%;
+}
 
 h1 { margin-top: 0; }
 
@@ -36,7 +63,15 @@ h1 { margin-top: 0; }
 .actions { margin-top: 1rem; }
 button { background: #2b8cff; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; cursor: pointer; }
 button:hover { background: #1a73e8; }
-.results { margin-top: 0; }
+
+#swap_columns_btn {
+  background: #f0f3f6;
+  color: #555;
+  border: 1px solid #e1e4e8;
+  padding: 0.5rem;
+  line-height: 1;
+}
+#swap_columns_btn:hover { background: #e1e4e8; }
 #outputs div { margin-bottom: 0.25rem; }
 
 /* Plot wrapper to contain plot and controls */
@@ -44,13 +79,16 @@ button:hover { background: #1a73e8; }
   background: #fff;
   border: 1px solid #eef2f6;
   border-radius: 6px;
-  overflow: hidden; /* ensures children with rounded corners look right */
+  overflow: hidden; 
+  height: 100%;
 }
 
-#plot { background: #fff; }
+#plot {
+  background: #fff;
+  height: 350px;
+}
 
 /* Plot tabs styling */
-.plot-container { margin-top: 1rem; }
 .plot-tabs { display: flex; border-bottom: 1px solid #eef2f6; margin-bottom: -1px; }
 .plot-tab-button { background: none; border: 1px solid transparent; border-bottom: none; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.9rem; color: #555; border-radius: 6px 6px 0 0; }
 .plot-tab-button:hover { background: #f7f9fb; }
@@ -58,7 +96,7 @@ button:hover { background: #1a73e8; }
 
 #lorentzian_controls {
   background: #fcfdff;
-  padding: 0.75rem;
+  padding: 0.3rem;
   display: flex;
   gap: 1rem;
   align-items: center;
@@ -75,9 +113,6 @@ button:hover { background: #1a73e8; }
 }
 /* Make getters visually separate */
 .getters { margin-top: 0.5rem; font-size: 0.85rem; color: #333; }
-
-/* Right column styling */
-.results-column .results { position: sticky; top: 1rem; }
 
 /* Responsive fallback */
 @media (max-width: 900px) {
