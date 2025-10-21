@@ -163,7 +163,7 @@ function copyParamValues(srcContainer, dstContainer) {
   });
 }
 
-let currentPlotType = 'quality_factors';
+let currentPlotType = 'lorentzian';
 let lorentzianTraces = [];
 
 async function main() {
@@ -216,6 +216,9 @@ async function main() {
   const saveLorentzianBtn = document.getElementById('save_lorentzian_btn');
   const clearLorentzianBtn = document.getElementById('clear_lorentzian_btn');
   const swapColumnsBtn = document.getElementById('swap_columns_btn');
+
+  // Show Lorentzian controls by default
+  lorentzianControls.classList.add('visible');
 
   // schedule simulation with debounce
   const doSimulate = debounce(async () => {
