@@ -73,7 +73,7 @@ def res_vs_coupling_data(resonator, n, num_points=50):
     plot_data = {'x': list(coupling.capacitance), 'y': list(y_data), 'x_label': 'Coupling Capacitance (F)', 'y_label': 'Resonance Frequency (Hz)'}
     return plot_data
 
-def lorentzian_data(resonator, n, points=400, **kwargs):
+def lorentzian_data(resonator, n, points=4000, **kwargs):
     w_0 = resonator.resonance_frequency(n)
     f0 = w_0 / (2 * math.pi) if w_0 else 0
     q_tot = resonator.quality_factor(n)
