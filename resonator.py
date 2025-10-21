@@ -106,15 +106,27 @@ class Resonator:
 
 
 if __name__ == '__main__':
-    from transition_line import SimplifiedTransitionLine
-    from capacitor_coupling import GapCapacitor
+    from transition_line import GeometricTransitionLine
+    from capacitor_coupling import SimplifiedCapacitor
     from substrate import EffectiveSubstrate
-    coup_in = GapCapacitor()
-    coup_out = GapCapacitor()
-    line = SimplifiedTransitionLine()
+    import numpy as np
+    import math
+
+    def res_vs_coupling_data(resonator, n, num_points=50):
+        in_coupling = resonator.input_coupling
+        out_coupling = resonator.output_coupling
+
+        coupling = resonator.input_coupling = resonator.output_coupling = SimplifiedCapacitor()
+        coupling.capacitance = np.linspace(coupling.CAPACITANCE_RANGE.min, coupling.CAPACITANCE_RANGE.max, num_points)
+        w_res = resonator.resonance_frequency(n)
+        y_data = w_res / (2 * math.pi)
+        resonator.input_coupling = in_coupling
+        resonator.output_coupling = out_coupling
+        plot_data = {'x': list(coupling.capacitance), 'y': list(y_data), 'x_label': 'Coupling Capacitance (F)', 'y_label': 'Resonance Frequency (Hz)'}
+        return plot_data
+
+    tl = GeometricTransitionLine()
+    coup = SimplifiedCapacitor()
     sub = EffectiveSubstrate()
-    reson = Resonator(line, coup_in, coup_out, sub)
-    coup_in.gap=1e-6
-    print(reson.quality_factor_external(1))
-    coup_in.gap=1e-4
-    print(reson.quality_factor_external(1))
+    resonator = Resonator(tl, coup, coup, sub)
+    print(res_vs_coupling_data(resonator, 1))

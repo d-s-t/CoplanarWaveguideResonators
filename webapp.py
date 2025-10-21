@@ -80,14 +80,11 @@ def lorentzian_data(resonator, n, points=400, **kwargs):
     df = f0 / q_tot
     span = 6 * df  # A reasonable span is a few linewidths
     f_min, f_max = f0 - span / 2, f0 + span / 2
-    freqs = np.linspace(f_min, f_max, points)
     
-    q_e = resonator.quality_factor_external(n)
-    s21_mag_db = []
-    s21 = 1 - (q_tot / q_e) / (1 + 2j * q_tot * (freqs - f0) / f0)
-    s21_mag_db = 20 * np.log10(abs(s21))
+    freqs = np.linspace(f_min, f_max, points)
+    y_data = df/((freqs - f0)**2 + (df/2)**2)
 
-    plot_data = {'x': list(freqs), 'y': list(s21_mag_db), 'x_label': 'Frequency (Hz)', 'y_label': 'S21 (dB)'}
+    plot_data = {'x': list(freqs), 'y': list(y_data), 'x_label': 'Frequency (Hz)', 'y_label': 'S21 (dB)'}
     return plot_data
 
 

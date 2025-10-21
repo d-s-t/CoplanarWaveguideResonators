@@ -90,21 +90,18 @@ class GapCapacitor(CapacitorCoupling):
     """
     GAP_RANGE = ValueRange(1e-6, 3e-5, 1e-4)
     WIDTH_RANGE = ValueRange(1e-6, 1e-5, 2e-5)
-    THICKNESS_RANGE = ValueRange(1e-7, 2e-7, 4e-7)
 
     def __init__(self,
                  resistence=CapacitorCoupling.RESISTANCE_RANGE.default,
                  gap=GAP_RANGE.default,
-                 width=WIDTH_RANGE.default,
-                 thickness=THICKNESS_RANGE.default):
+                 width=WIDTH_RANGE.default,):
         super().__init__(resistence)
         self.gap = gap
         self.width = width
-        self.thickness = thickness
 
     @property
     def capacitance(self):
-        return self.substrate.permittivity * self.width * self.thickness / self.gap
+        return self.substrate.permittivity * self.width / self.gap
 
     @property
     def gap(self):
@@ -124,15 +121,6 @@ class GapCapacitor(CapacitorCoupling):
             raise ValueError("Width must be positive")
         self.__width = value
 
-    @property
-    def thickness(self):
-        return self.__thickness
-    @thickness.setter
-    def thickness(self, value):
-        if np.any(value <= 0):
-            raise ValueError("Thickness must be positive")
-        self.__thickness = value
-
 class FingerCapacitor(CapacitorCoupling):
     """
     A class representing a finger capacitor coupling mechanism.
@@ -144,26 +132,23 @@ class FingerCapacitor(CapacitorCoupling):
         gap: Gap between fingers
     """
     LENGTH_RANGE = ValueRange(5e-5, 1e-4, 2e-4)
-    THICKNESS_RANGE = ValueRange(1e-7, 2e-7, 4e-7)
     COUNT_RANGE = ValueRange(1, 5, 20, 1)
     GAP_RANGE = ValueRange(1e-6, 3.3e-6, 7e-6)
 
     def __init__(self,
                  resistence=CapacitorCoupling.RESISTANCE_RANGE.default,
                  length=LENGTH_RANGE.default,
-                 thickness=THICKNESS_RANGE.default,
                  count=COUNT_RANGE.default,
                  gap=GAP_RANGE.default
                  ):
         super().__init__(resistence)
         self.finger_length = length
-        self.finger_thickness = thickness
         self.finger_count = count
         self.finger_gap = gap
 
     @property
     def capacitance(self):
-        return self.substrate.permittivity * self.finger_length * self.finger_thickness * self.finger_count / self.finger_gap
+        return self.substrate.permittivity * self.finger_length * self.finger_count / self.finger_gap
 
     @property
     def finger_length(self):
@@ -173,15 +158,6 @@ class FingerCapacitor(CapacitorCoupling):
         if np.any(value <= 0):
             raise ValueError("Finger length must be positive")
         self.__finger_length = value
-
-    @property
-    def finger_thickness(self):
-        return self.__finger_thickness
-    @finger_thickness.setter
-    def finger_thickness(self, value):
-        if np.any(value <= 0):
-            raise ValueError("Finger thickness must be positive")
-        self.__finger_thickness = value
 
     @property
     def finger_count(self):
