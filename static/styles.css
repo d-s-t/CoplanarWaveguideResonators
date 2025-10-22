@@ -92,9 +92,9 @@ button:hover { background: #1a73e8; }
 
 /* Plot tabs styling */
 .plot-tabs { display: flex; border-bottom: 1px solid #eef2f6; margin-bottom: -1px; }
-.plot-tab-button { background: none; border: 1px solid transparent; border-bottom: none; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.9rem; color: #555; border-radius: 6px 6px 0 0; }
+.plot-tab-button { background: none; border: 2px solid #dae0e5; border-bottom: none; padding: 0.5rem; cursor: pointer; font-size: 0.9rem; color: #555; border-radius: 12px 12px 0 0; }
 .plot-tab-button:hover { background: #f7f9fb; }
-.plot-tab-button.active { background: #fff; border-color: #eef2f6; border-bottom: 1px solid #fff; color: #2b8cff; font-weight: 600; }
+.plot-tab-button.active { background: #2b8cff; border-color: #8ea3b7; color: #fff; font-weight: 600; }
 
 /* Position the swap button at the bottom-left of the results panel */
 .swap-between {
