@@ -52,7 +52,7 @@ h1 { margin-top: 0; }
 .params { margin-top: 0.5rem; }
 .param { margin-bottom: 0.5rem; }
 .param label { display: block; font-size: 0.85rem; margin-bottom: 0.25rem; }
-.param-controls { display:flex; gap:0.5rem; align-items: center; min-width: 0; }
+.param-controls { display:flex; flex-wrap: wrap; gap:0.5rem; align-items: center; min-width: 0; }
 .param-number { width: 100px; }
 .param-range { flex: 1; }
 

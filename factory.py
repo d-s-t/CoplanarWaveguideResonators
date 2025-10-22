@@ -10,7 +10,7 @@ TransitionLines = {
 
 CapacitorCouplings = {
     "simplified": SimplifiedCapacitor,
-    "gap": GapCapacitor,
+    # "gap": GapCapacitor,
     # "finger": FingerCapacitor
 }
 
