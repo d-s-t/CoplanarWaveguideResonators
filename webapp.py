@@ -22,10 +22,8 @@ _current = {
     }
 }
 
-
 def _get_class_parameters(cls):
     return {k: v._asdict() for k, v in cls.PARAMETERS.items()}
-
 
 def _instantiate_with_params(cls, params):
     # Try to construct using init kwargs first
@@ -38,8 +36,6 @@ def _instantiate_with_params(cls, params):
     for k, v in params.items():
         if k in allowed:
             kwargs[k] = v
-        elif k == 'resistance' and 'resistence' in allowed:
-            kwargs['resistence'] = v
     try:
         return cls(**kwargs)
     except Exception:
@@ -47,7 +43,6 @@ def _instantiate_with_params(cls, params):
         inst = cls()
         _update_instance_attributes(inst, params)
         return inst
-
 
 def res_vs_length_data(resonator, n, num_points=50):
     original_length = resonator.transition_line.length
@@ -58,7 +53,6 @@ def res_vs_length_data(resonator, n, num_points=50):
     resonator.transition_line.length = original_length  # restore
     plot_data = {'x': list(x_data), 'y': list(y_data), 'x_label': 'Transition Line Length (m)', 'y_label': 'Resonance Frequency (Hz)'}
     return plot_data
-
 
 def res_vs_coupling_data(resonator, n, num_points=50):
     in_coupling = resonator.input_coupling
@@ -87,13 +81,11 @@ def lorentzian_data(resonator, n, points=4000, **kwargs):
     plot_data = {'x': list(freqs), 'y': list(y_data), 'x_label': 'Frequency (Hz)', 'y_label': 'S21 (dB)'}
     return plot_data
 
-
 plot_data_mapping = {
     'res_vs_length': res_vs_length_data,
     'res_vs_coupling': res_vs_coupling_data,
     'lorentzian': lorentzian_data
 }
-
 
 def _find_candidate_attribute(inst, key):
     """Find a plausible attribute name on inst that corresponds to key.
@@ -113,7 +105,6 @@ def _find_candidate_attribute(inst, key):
             return a
     return None
 
-
 def _update_instance_attributes(inst, params):
     if not params:
         return
@@ -130,7 +121,6 @@ def _update_instance_attributes(inst, params):
             setattr(inst, k, v)
         except Exception:
             pass
-
 
 def _init_current_instances():
     # initialize module globals with default component instances
@@ -149,30 +139,10 @@ def _init_current_instances():
             'output_coupling': oname,
             'substrate': sname
         }
-        # ensure substrate propagation
-        _propagate_substrate()
-
-
-def _propagate_substrate():
-    s = _current['substrate']
-    if _current['transition_line'] is not None:
-        try:
-            _current['transition_line'].substrate = s
-        except Exception:
-            pass
-    for key in ('input_coupling', 'output_coupling'):
-        inst = _current.get(key)
-        if inst is not None:
-            try:
-                inst.substrate = s
-            except Exception:
-                pass
-
 
 @app.route('/')
 def index():
     return render_template('index.html')
-
 
 @app.route('/api/options')
 def options():
@@ -208,30 +178,6 @@ def options():
         }
 
     return jsonify(data)
-
-
-def _approx_parallel_resistance_for_capacitor(cap_inst, w_n):
-    try:
-        c_k = float(cap_inst.capacitance)
-        r_l = float(cap_inst.resistance)
-    except Exception:
-        return None
-    if w_n is None or w_n == 0 or c_k == 0:
-        return None
-    wcr = abs(w_n * c_k * r_l)
-    # low-frequency asymptote when wcr << 1: R_par ≈ 1/(w^2 C^2 R)
-    if wcr < 0.5:
-        return 1.0 / (w_n ** 2 * c_k ** 2 * r_l)
-    # high-frequency asymptote when wcr >> 1: R_par ≈ R
-    if wcr > 5:
-        return r_l
-    # intermediate: blend between the two asymptotes (log-linear interpolation)
-    # map wcr in [0.5,5] -> t in [0,1]
-    t = (math.log(wcr) - math.log(0.5)) / (math.log(5) - math.log(0.5))
-    low = 1.0 / (w_n ** 2 * c_k ** 2 * r_l)
-    high = r_l
-    return low * (1 - t) + high * t
-
 
 @app.route('/api/simulate', methods=['POST'])
 def simulate():
@@ -282,9 +228,6 @@ def simulate():
             _current['substrate'] = Substrates[s_name]()
             _current['selection']['substrate'] = s_name
         _update_instance_attributes(_current['substrate'], s_params)
-
-        # propagate substrate into components
-        _propagate_substrate()
 
         # Build resonator from current instances
         reson = Resonator(_current['transition_line'], _current['input_coupling'], _current['output_coupling'], _current['substrate'])
@@ -377,7 +320,7 @@ def simulate():
                         r_par = None
                     out['parallel_resistance'] = r_par
                     # approximate
-                    out['parallel_resistance_approx'] = _approx_parallel_resistance_for_capacitor(cap_inst, w_n)
+                    out['parallel_resistance_approx'] = cap_inst.parallel_resistance_approx(w_n)
                 # k-factor = coupling capacitance / total capacitance
                 if c_val is not None and total_c is not None and total_c != 0:
                     out['k_factor'] = float(c_val) / float(total_c)
@@ -411,7 +354,6 @@ def simulate():
         return jsonify({'error': f'Unknown component: {e}'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 
 if __name__ == '__main__':
     _init_current_instances()

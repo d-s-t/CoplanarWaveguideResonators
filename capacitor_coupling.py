@@ -11,8 +11,8 @@ class CapacitorCoupling(ABC, metaclass=RangeCollectorMeta):
     RESISTANCE_RANGE = ValueRange(10, 30, 50, .1)  # Ohm
 
     @abstractmethod
-    def __init__(self, resistence):
-        self.resistance = resistence
+    def __init__(self, resistance):
+        self.resistance = resistance
         self.substrate = None
 
     def parallel_capacitance(self, w_n):
@@ -25,7 +25,7 @@ class CapacitorCoupling(ABC, metaclass=RangeCollectorMeta):
         r_l = self.resistance
         return (1 + (w_n * c_k * r_l) ** 2) / (w_n ** 2 * c_k ** 2 * r_l)
 
-    def parallel_resonance_approx(self, w_n):
+    def parallel_resistance_approx(self, w_n):
         return self.resistance / (self.k_factor(w_n) ** 2)
 
     def k_factor(self, w_n):
@@ -65,9 +65,9 @@ class SimplifiedCapacitor(CapacitorCoupling):
     """
     CAPACITANCE_RANGE = ValueRange(1e-17, 4e-15, 7e-14, 1e-17)  # Farad
     def __init__(self,
-                 resistence=CapacitorCoupling.RESISTANCE_RANGE.default,
+                 resistance=CapacitorCoupling.RESISTANCE_RANGE.default,
                  capacitance=CAPACITANCE_RANGE.default):
-        super().__init__(resistence)
+        super().__init__(resistance)
         self.capacitance = capacitance
 
     @property
@@ -92,10 +92,10 @@ class GapCapacitor(CapacitorCoupling):
     WIDTH_RANGE = ValueRange(1e-6, 1e-5, 2e-5)
 
     def __init__(self,
-                 resistence=CapacitorCoupling.RESISTANCE_RANGE.default,
+                 resistance=CapacitorCoupling.RESISTANCE_RANGE.default,
                  gap=GAP_RANGE.default,
                  width=WIDTH_RANGE.default,):
-        super().__init__(resistence)
+        super().__init__(resistance)
         self.gap = gap
         self.width = width
 
@@ -136,12 +136,12 @@ class FingerCapacitor(CapacitorCoupling):
     GAP_RANGE = ValueRange(1e-6, 3.3e-6, 7e-6)
 
     def __init__(self,
-                 resistence=CapacitorCoupling.RESISTANCE_RANGE.default,
+                 resistance=CapacitorCoupling.RESISTANCE_RANGE.default,
                  length=LENGTH_RANGE.default,
                  count=COUNT_RANGE.default,
                  gap=GAP_RANGE.default
                  ):
-        super().__init__(resistence)
+        super().__init__(resistance)
         self.finger_length = length
         self.finger_count = count
         self.finger_gap = gap
