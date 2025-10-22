@@ -611,11 +611,14 @@ async function main() {
 
     // change the max-height of the control panel to match the new height
     const controls = document.querySelector('.controls-column')
-    const results = document.querySelector('.results');
-    const resultsHeight = results.clientHeight;
-    const gap = window.getComputedStyle(container).gap
-    controls.style.maxHeight = "calc(100vh - " + resultsHeight + "px - 120px - " + gap + ")";
-
+    if (container.classList.contains('layout-swapped')) {
+        const results = document.querySelector('.results');
+        const resultsHeight = results.clientHeight;
+        const gap = window.getComputedStyle(container).gap
+        controls.style.maxHeight = "calc(100vh - " + resultsHeight + "px - 120px - " + gap + ")";
+    }else{
+        controls.style.removeProperty('max-height');
+    }
     // After the CSS transition, tell Plotly to resize.
     Plotly.Plots.resize(document.getElementById('plot'));
   });

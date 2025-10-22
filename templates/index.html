@@ -11,7 +11,6 @@
   <div class="container two-column">
     <div class="header-row">
       <h1>Resonator Simulator</h1>
-      <button id="swap_columns_btn" title="Swap Controls and Plot">&leftrightarrow;</button>
     </div>
 
     <div class="controls-column scrollable-column">
@@ -82,7 +81,7 @@
       </div>
       <div id="outputs">
 <!--        <div>Angular frequency (w1): <span id="w1">-</span></div>-->
-        <div>Frequency: <span id="f1">-</span>GHz</div>
+        <div>f<sub>0</sub>: <span id="f1">-</span>GHz</div>
         <div>Q<sub>int</sub>: <span id="q_i">-</span></div>
         <div>Q<sub>ext</sub>: <span id="q_e">-</span></div>
         <div>Q<sub>L</sub>: <span id="q_tot">-</span></div>
@@ -92,7 +91,7 @@
     <div class="plot-column">
       <div class="plot-tabs">
         <button class="plot-tab-button active" data-plottype="lorentzian">Lorentzian</button>
-        <button class="plot-tab-button" data-plottype="res_vs_length">Resonance vs Length</button>
+        <button class="plot-tab-button" data-plottype="res_vs_length">f<sub>0</sub> vs Length</button>
         <button class="plot-tab-button" data-plottype="q_vs_coupling">Q<sub>L</sub> vs Coupling</button>
           <button class="plot-tab-button" data-plottype="q_vs_n">Q<sub>L</sub> vs n</button>
       </div>
@@ -106,6 +105,7 @@
         </div>
       </div>
     </div>
+    <button id="swap_columns_btn" title="Swap Controls and Plot" class="swap-between" aria-label="Swap Controls and Plot">&leftrightarrow;</button>
   </div>
 
   <script src="/static/app.js"></script>

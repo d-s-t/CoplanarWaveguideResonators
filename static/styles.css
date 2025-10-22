@@ -6,7 +6,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f7f9f
 /* Two-column layout with explicit grid areas: header, controls (left), results (right) */
 .container.two-column {
   display: grid;
-  grid-template-columns: 1fr 420px;
+  grid-template-columns: 2fr 1fr;
   grid-template-rows: auto auto 1fr;
   grid-template-areas: "header header" "controls results" "controls plot";
   gap: 1rem;
@@ -26,8 +26,8 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f7f9f
   max-height: calc(100vh - 120px); /* Make it scrollable in the left column */
   overflow: auto;
 }
-.results { grid-area: results; }
-.plot-column { 
+.results { grid-area: results; position: relative; anchor-name: --result;}
+.plot-column {
   grid-area: plot;
   min-width: 0;
   display: flex;
@@ -95,6 +95,39 @@ button:hover { background: #1a73e8; }
 .plot-tab-button { background: none; border: 1px solid transparent; border-bottom: none; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.9rem; color: #555; border-radius: 6px 6px 0 0; }
 .plot-tab-button:hover { background: #f7f9fb; }
 .plot-tab-button.active { background: #fff; border-color: #eef2f6; border-bottom: 1px solid #fff; color: #2b8cff; font-weight: 600; }
+
+/* Position the swap button at the bottom-left of the results panel */
+.swap-between {
+  position: absolute;
+  position-anchor: --result;
+  right: anchor(left);
+  top: anchor(bottom);
+  z-index: 6; /* above other contents */
+  /* keep the previous visual style from #swap_columns_btn */
+  background: #f0f3f6;
+  color: #555;
+  border: 1px solid #e1e4e8;
+  padding: 0.5rem;
+  line-height: 1;
+  border-radius: 6px;
+  transform: none;
+  transition: background 120ms ease, transform 120ms ease, left 120ms ease, bottom 120ms ease;
+}
+
+/* No special horizontal offset needed when layout is swapped; the button remains inside the results box */
+.container.two-column.layout-swapped .results .swap-between {
+  /* When layout is swapped, place the button just outside the right edge of the results box */
+  left: auto;
+  right: -18px;
+}
+
+/* Small screens: keep the swap button inside the results box */
+@media (max-width: 900px) {
+  .swap-between { left: 8px; right: auto; bottom: 8px; }
+  .container.two-column { grid-template-columns: 1fr; grid-template-areas: "header" "controls" "results"; }
+  .selectors.three-columns { grid-template-columns: 1fr; }
+  .param-range.narrow-range { width: 100%; }
+}
 
 #lorentzian_controls {
   background: #fcfdff;
