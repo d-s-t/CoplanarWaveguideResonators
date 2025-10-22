@@ -32,8 +32,8 @@ class EffectiveSubstrate(Substrate):
 
     def __init__(self, relative_permittivity=RELATIVE_PERMITTIVITY_RANGE.default,
                  relative_permeability=RELATIVE_PERMEABILITY_RANGE.default):
-        self.relative_permittivity = relative_permittivity * constants.epsilon_0
-        self.relative_permeability = relative_permeability * constants.mu_0
+        self.relative_permittivity = relative_permittivity
+        self.relative_permeability = relative_permeability
 
     @property
     def relative_permittivity(self):
