@@ -102,8 +102,8 @@ button:hover { background: #1a73e8; }
   position-anchor: --result;
   right: anchor(left);
   top: anchor(bottom);
-  z-index: 6; /* above other contents */
-  /* keep the previous visual style from #swap_columns_btn */
+  z-index: 6;
+  margin-top: 16px;
   background: #f0f3f6;
   color: #555;
   border: 1px solid #e1e4e8;

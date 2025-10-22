@@ -127,6 +127,33 @@ function buildSelector(map, selectEl, defaultValue) {
   selectEl.value = defaultValue || selectEl.options[0].value;
 }
 
+// New: helpers to hide selectors when they contain 0 or 1 options
+function _updateSelectorVisibility(selectEl) {
+  if (!selectEl) return;
+  const container = selectEl.closest('.selector');
+  if (!container) return;
+  const count = selectEl.options ? selectEl.options.length : 0;
+  if (count <= 1) {
+    // hide the whole selector box (label, select, params, getters)
+    selectEl.style.display = 'none';
+  } else {
+    // let CSS control the display (remove inline override)
+    selectEl.style.removeProperty('display');
+  }
+}
+
+function _updateAllSelectorsVisibility(ctx) {
+  // ctx is an object with references to the elements we need (if available)
+  if (!ctx) return;
+  const { tSelect, inSelect, outSelect, symmetricSelect, sSelect, ioStack, symmetricContainer, symmetricCheckbox } = ctx;
+
+  _updateSelectorVisibility(tSelect);
+  _updateSelectorVisibility(inSelect);
+  _updateSelectorVisibility(outSelect);
+  _updateSelectorVisibility(symmetricSelect);
+  _updateSelectorVisibility(sSelect);
+}
+
 // collect parameter values from a params container (reads .param-number inputs)
 function collectParams(container) {
   const out = {};
@@ -185,8 +212,8 @@ async function main() {
   const plotDiv = document.getElementById('plot');
 
   // containers and symmetric controls
-  const inputContainer = document.getElementById('input_container');
-  const outputContainer = document.getElementById('output_container');
+  // const inputContainer = document.getElementById('input_container');
+  // const outputContainer = document.getElementById('output_container');
   const symmetricContainer = document.getElementById('symmetric_container');
   const ioStack = document.getElementById('input_output_stack');
   const symmetricSelect = document.getElementById('symmetric_coupling_select');
@@ -205,6 +232,9 @@ async function main() {
     if (!sSelect.value) sSelect.value = opts.defaults.substrate;
     if (!symmetricSelect.value) symmetricSelect.value = opts.defaults.input_coupling;
   }
+
+  // After building selectors, update visibility to hide selectors with only one option
+  _updateAllSelectorsVisibility({ tSelect, inSelect, outSelect, symmetricSelect, sSelect, ioStack, symmetricContainer, symmetricCheckbox });
 
   const tParamsContainer = document.getElementById('transition_line_params');
   const inParamsContainer = document.getElementById('input_coupling_params');
@@ -460,16 +490,8 @@ async function main() {
       }
       const presets = data.presets || [];
 
-      // determine current x-range from existing plot or from current trace
-      let xmin = null, xmax = null;
-      const currentTrace = (plotDiv && plotDiv.data) ? plotDiv.data.find(t => t.name === 'Current') : null;
-      if (plotDiv && plotDiv._fullLayout && plotDiv._fullLayout.xaxis && plotDiv._fullLayout.xaxis.range) {
-        xmin = plotDiv._fullLayout.xaxis.range[0];
-        xmax = plotDiv._fullLayout.xaxis.range[1];
-      } else if (currentTrace && currentTrace.x && currentTrace.x.length) {
-        xmin = Math.min(...currentTrace.x);
-        xmax = Math.max(...currentTrace.x);
-      }
+      // previously we attempted to determine current x-range here, but those values were
+      // unused; remove that code to avoid linter warnings
 
       setAnnotations(presets);
 
@@ -499,6 +521,9 @@ async function main() {
 
     // trigger simulate after re-render
     doSimulate();
+
+    // ensure visibility rules are applied after a re-render
+    _updateAllSelectorsVisibility({ tSelect, inSelect, outSelect, symmetricSelect, sSelect, ioStack, symmetricContainer, symmetricCheckbox });
   };
 
   tSelect.addEventListener('change', () => { renderParamsFor('transition_lines', tSelect, tParamsContainer, opts.transition_lines, doSimulate); doSimulate(); });
@@ -561,6 +586,10 @@ async function main() {
     if (!symmetricCheckbox.checked && currentPlotType === 'q_vs_coupling') {
       document.querySelector('[data-plottype="lorentzian"]').click();
     }
+
+    // update visibility in case selects have only one option
+    _updateAllSelectorsVisibility({ tSelect, inSelect, outSelect, symmetricSelect, sSelect, ioStack, symmetricContainer, symmetricCheckbox });
+
     doSimulate();
   });
 
