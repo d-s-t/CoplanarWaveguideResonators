@@ -165,6 +165,8 @@ function copyParamValues(srcContainer, dstContainer) {
 
 let currentPlotType = 'lorentzian';
 let lorentzianTraces = [];
+let presetTraces = [];
+let presetAnnotations = [];
 
 async function main() {
   let opts;
@@ -180,6 +182,7 @@ async function main() {
   const outSelect = document.getElementById('output_coupling_select');
   const sSelect = document.getElementById('substrate_select');
   const symmetricCheckbox = document.getElementById('symmetric_checkbox');
+  const plotDiv = document.getElementById('plot');
 
   // containers and symmetric controls
   const inputContainer = document.getElementById('input_container');
@@ -215,6 +218,8 @@ async function main() {
   const lorentzianControls = document.getElementById('lorentzian_controls');
   const saveLorentzianBtn = document.getElementById('save_lorentzian_btn');
   const clearLorentzianBtn = document.getElementById('clear_lorentzian_btn');
+  const insertPresetsBtn = document.getElementById('insert_presets_btn');
+  const clearPresetsBtn = document.getElementById('clear_presets_btn');
   const swapColumnsBtn = document.getElementById('swap_columns_btn');
 
   // Show Lorentzian controls by default
@@ -276,25 +281,17 @@ async function main() {
         return;
       }
 
-      document.getElementById('w1').textContent = (data.w1 !== null && data.w1 !== undefined) ? Number(data.w1).toPrecision(3) : '-';
-      document.getElementById('f1').textContent = (data.f1 !== null && data.f1 !== undefined) ? Number(data.f1).toPrecision(3) : '-';
+      // document.getElementById('w1').textContent = (data.w1 !== null && data.w1 !== undefined) ? Number(data.w1).toPrecision(3) : '-';
+      document.getElementById('f1').textContent = (data.f1 !== null && data.f1 !== undefined) ? (Number(data.f1)/1e9).toPrecision(5) : '-';
       document.getElementById('q_i').textContent = (data.q_internal !== null && data.q_internal !== undefined) ? Number(data.q_internal).toPrecision(3) : '-';
       document.getElementById('q_e').textContent = (data.q_external !== null && data.q_external !== undefined) ? Number(data.q_external).toPrecision(3) : '-';
       document.getElementById('q_tot').textContent = (data.q_total !== null && data.q_total !== undefined) ? Number(data.q_total).toPrecision(3) : '-';
 
       // --- Plotting ---
-      const plotDiv = document.getElementById('plot');
       let traces = [];
       let layout = { title: 'Plot', yaxis: {title: 'Y'}, xaxis: {title: 'X'}, margin: { l: 50, r: 20, t: 30, b: 40 } };
 
-      if (currentPlotType === 'quality_factors') {
-        const qNames = ['Q_internal', 'Q_external', 'Q_total'];
-        const qVals = [data.q_internal || 0, data.q_external || 0, data.q_total || 0];
-        traces.push({ x: qNames, y: qVals, type: 'bar' });
-        layout.title = 'Quality Factors';
-        layout.yaxis.title = 'Q';
-        layout.xaxis.title = '';
-      } else if (data.plot_data && data.plot_data.x && data.plot_data.y) {
+      if (data.plot_data && data.plot_data.x && data.plot_data.y) {
         const currentTrace = {
           x: data.plot_data.x,
           y: data.plot_data.y,
@@ -314,9 +311,38 @@ async function main() {
         }
       }
 
-      if (window.Plotly) {
-        Plotly.react(plotDiv, traces, layout, {responsive: true});
+      // include preset Lorentzian traces and annotations if present
+      if (currentPlotType === 'lorentzian') {
+        // prepend preset traces so they appear beneath saved/current traces
+        if (presetTraces && presetTraces.length) traces = [...presetTraces, ...traces];
+        if (presetAnnotations && presetAnnotations.length) layout.annotations = presetAnnotations;
       }
+
+      // if plotting Q vs coupling, set x-axis to log scale
+      if (currentPlotType === 'q_vs_coupling') {
+        // Plotly expects positive x values for log scale; assume backend provides positive capacitances
+        layout.xaxis = layout.xaxis || {};
+        layout.xaxis.type = 'log';
+        // also set y-axis to log scale for better visualization
+        layout.yaxis = layout.yaxis || {};
+        layout.yaxis.type = 'log';
+      }
+
+      // if plotting Q vs mode number, force integer x ticks and use markers
+      if (currentPlotType === 'q_vs_n') {
+        layout.xaxis = layout.xaxis || {};
+        layout.xaxis.dtick = 1;
+        layout.xaxis.tick0 = 1;
+        layout.xaxis.autorange = true;
+        // prefer markers+lines for discrete mode points
+        if (traces && traces.length) {
+          traces = traces.map(t => ({ ...t, mode: t.mode || 'lines+markers' }));
+        }
+      }
+
+       if (window.Plotly) {
+         Plotly.react(plotDiv, traces, layout, {responsive: true});
+       }
 
 
 
@@ -399,6 +425,70 @@ async function main() {
     }
   }, 250);
 
+  function setAnnotations(presets) {
+    presetAnnotations = presets.map(p => ({
+        x: p.x[Math.floor(p.x.length/2)], xref: 'x', yref: 'y', y: p.y[Math.floor(p.x.length/2)],
+        text: p.name, showarrow: false,
+        bgcolor: 'rgba(255,255,255,0)', bordercolor: 'rgba(255,255,255,0)', align: 'center', font: {size: 11}, yanchor: 'bottom'
+    }));
+  }
+
+     //   presetTraces.push({ x: x, y: y, type: 'scatter', mode: 'lines', name: `Preset ${p.name}`, line: {dash: 'dot', width: 2, color: '#d62728'} });
+  function setTraces(presets) {
+    presetTraces = presets.map(p => ({
+      x: p.x,
+      y: p.y,
+      type: 'scatter',
+      mode: 'lines',
+      name: `Preset ${p.name}`,
+      line: { width: 2, color: p.color },
+      showlegend: false
+    }));
+  }
+
+  // Insert presets button: request server-calculated presets and draw small Lorentzian traces
+  insertPresetsBtn.addEventListener('click', async () => {
+    try {
+      const n = parseInt(modeNumber.value) || 1;
+      const res = await fetch('/api/presets', {
+        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({n})
+      });
+      const data = await res.json();
+      if (data.error) {
+        console.error('Presets error', data.error);
+        return;
+      }
+      const presets = data.presets || [];
+
+      // determine current x-range from existing plot or from current trace
+      let xmin = null, xmax = null;
+      const currentTrace = (plotDiv && plotDiv.data) ? plotDiv.data.find(t => t.name === 'Current') : null;
+      if (plotDiv && plotDiv._fullLayout && plotDiv._fullLayout.xaxis && plotDiv._fullLayout.xaxis.range) {
+        xmin = plotDiv._fullLayout.xaxis.range[0];
+        xmax = plotDiv._fullLayout.xaxis.range[1];
+      } else if (currentTrace && currentTrace.x && currentTrace.x.length) {
+        xmin = Math.min(...currentTrace.x);
+        xmax = Math.max(...currentTrace.x);
+      }
+
+      setAnnotations(presets);
+
+      setTraces(presets);
+
+      // re-render (doSimulate will include presetTraces when lorentzian)
+      doSimulate();
+    } catch (err) {
+      console.error('Failed to insert presets', err);
+    }
+  });
+
+  clearPresetsBtn.addEventListener('click', () => {
+    presetTraces = [];
+    presetAnnotations = [];
+    // re-render to remove them
+    doSimulate();
+  });
+
   // helper to re-render param panels and attach onChange to trigger simulate
   const renderAll = () => {
     renderParamsFor('transition_lines', tSelect, tParamsContainer, opts.transition_lines, doSimulate);
@@ -465,6 +555,12 @@ async function main() {
       renderParamsFor('capacitor_couplings', inSelect, inParamsContainer, opts.capacitor_couplings, doSimulate);
       renderParamsFor('capacitor_couplings', outSelect, outParamsContainer, opts.capacitor_couplings, doSimulate);
     }
+    // ensure coupling tab (Q vs Coupling) is enabled/disabled immediately when symmetric toggles
+    const qVsCouplingTab2 = document.querySelector('[data-plottype="q_vs_coupling"]');
+    if (qVsCouplingTab2) qVsCouplingTab2.disabled = !symmetricCheckbox.checked;
+    if (!symmetricCheckbox.checked && currentPlotType === 'q_vs_coupling') {
+      document.querySelector('[data-plottype="lorentzian"]').click();
+    }
     doSimulate();
   });
 
@@ -489,12 +585,11 @@ async function main() {
       } else {
         lorentzianControls.classList.remove('visible');
       }
-      const resVsCouplingTab = document.querySelector('[data-plottype="res_vs_coupling"]');
-      if (resVsCouplingTab) {
-        resVsCouplingTab.disabled = !symmetricCheckbox.checked;
-        if (!symmetricCheckbox.checked && currentPlotType === 'res_vs_coupling') {
-            document.querySelector('[data-plottype="quality_factors"]').click();
-        }
+      // enable/disable Q vs Coupling tab when symmetric coupling isn't selected
+      const qVsCouplingTab = document.querySelector('[data-plottype="q_vs_coupling"]');
+      if (qVsCouplingTab) qVsCouplingTab.disabled = !symmetricCheckbox.checked;
+      if (!symmetricCheckbox.checked && currentPlotType === 'q_vs_coupling') {
+        document.querySelector('[data-plottype="lorentzian"]').click();
       }
       doSimulate();
     });

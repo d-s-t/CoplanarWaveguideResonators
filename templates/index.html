@@ -81,26 +81,28 @@
         </div>
       </div>
       <div id="outputs">
-        <div>Angular frequency (w1): <span id="w1">-</span></div>
-        <div>Frequency (f1, Hz): <span id="f1">-</span></div>
-        <div>Q (internal): <span id="q_i">-</span></div>
-        <div>Q (external): <span id="q_e">-</span></div>
-        <div>Q (total): <span id="q_tot">-</span></div>
+<!--        <div>Angular frequency (w1): <span id="w1">-</span></div>-->
+        <div>Frequency: <span id="f1">-</span>GHz</div>
+        <div>Q<sub>int</sub>: <span id="q_i">-</span></div>
+        <div>Q<sub>ext</sub>: <span id="q_e">-</span></div>
+        <div>Q<sub>L</sub>: <span id="q_tot">-</span></div>
       </div>
     </div>
 
     <div class="plot-column">
       <div class="plot-tabs">
         <button class="plot-tab-button active" data-plottype="lorentzian">Lorentzian</button>
-        <button class="plot-tab-button" data-plottype="quality_factors">Quality Factors</button>
         <button class="plot-tab-button" data-plottype="res_vs_length">Resonance vs Length</button>
-        <button class="plot-tab-button" data-plottype="res_vs_coupling">Resonance vs Coupling</button>
+        <button class="plot-tab-button" data-plottype="q_vs_coupling">Q<sub>L</sub> vs Coupling</button>
+          <button class="plot-tab-button" data-plottype="q_vs_n">Q<sub>L</sub> vs n</button>
       </div>
       <div class="plot-wrapper">
         <div id="plot" style="width:100%;"></div>
         <div id="lorentzian_controls" class="visible">
           <button id="save_lorentzian_btn">Save Current Trace</button>
           <button id="clear_lorentzian_btn">Clear Saved Traces</button>
+          <button id="insert_presets_btn" title="Insert preset coupling frequencies">Insert Presets</button>
+          <button id="clear_presets_btn" title="Clear preset annotations">Clear Presets</button>
         </div>
       </div>
     </div>

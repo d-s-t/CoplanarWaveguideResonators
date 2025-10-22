@@ -77,19 +77,16 @@ class GeometricTransitionLine(TransitionLine):
 
     WIDTH_RANGE = ValueRange(1e-6, 1e-5, 2e-5)
     SEPARATION_RANGE = ValueRange(1e-6, 1e-5, 2e-5)
-    THICKNESS_RANGE = ValueRange(1e-7, 2e-7, 4e-7)
     ATTENUATION_CONSTANT_RANGE = ValueRange(0, 2.4e-4, 1e-3)  # Neper/m
 
     def __init__(self,
                  length=TransitionLine.LENGTH_RANGE.default,
                  width=WIDTH_RANGE.default,
                  separation=SEPARATION_RANGE.default,
-                 thickness=THICKNESS_RANGE.default,
                  attenuation_constant=ATTENUATION_CONSTANT_RANGE.default):
         super().__init__(length)
         self.width = width
         self.separation = separation
-        self.thickness = thickness
         self.attenuation_constant = attenuation_constant
 
     @property
@@ -125,16 +122,6 @@ class GeometricTransitionLine(TransitionLine):
         if np.any(value <= 0):
             raise ValueError("Separation must be positive")
         self.__separation = value
-
-    @property
-    def thickness(self):
-        return self.__thickness
-
-    @thickness.setter
-    def thickness(self, value):
-        if np.any(value <= 0):
-            raise ValueError("Thickness must be positive")
-        self.__thickness = value
 
     @property
     def attenuation_constant(self):

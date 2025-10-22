@@ -63,7 +63,7 @@ class SimplifiedCapacitor(CapacitorCoupling):
     attributes:
         capacitance: The capacitance of the capacitor
     """
-    CAPACITANCE_RANGE = ValueRange(1e-17, 4e-15, 7e-14, 1e-17)  # Farad
+    CAPACITANCE_RANGE = ValueRange(1e-16, 4e-15, 7e-14, 1e-17)  # Farad
     def __init__(self,
                  resistance=CapacitorCoupling.RESISTANCE_RANGE.default,
                  capacitance=CAPACITANCE_RANGE.default):

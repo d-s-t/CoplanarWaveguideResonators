@@ -1,6 +1,9 @@
 from flask import Flask, render_template, jsonify, request
-from factory import TransitionLines, CapacitorCouplings, Substrates, PRESETS_COUPLING_CAPACITANCE
+from factory import TransitionLines, CapacitorCouplings, Substrates, PRESETS_COUPLING_CAPACITANCE, PRESET_NAMES
 from resonator import Resonator
+from transition_line import GeometricTransitionLine
+from substrate import EffectiveSubstrate
+from capacitor_coupling import SimplifiedCapacitor
 import math
 import inspect
 import numpy as np
@@ -44,47 +47,69 @@ def _instantiate_with_params(cls, params):
         _update_instance_attributes(inst, params)
         return inst
 
-def res_vs_length_data(resonator, n, num_points=50):
+def res_vs_length_data(resonator, n, num_points=500):
     original_length = resonator.transition_line.length
     length_range = resonator.transition_line.LENGTH_RANGE
     x_data = resonator.transition_line.length = np.linspace(length_range.min, length_range.max, num_points)
     w_res = resonator.resonance_frequency(n)
     y_data = w_res / (2 * math.pi)
     resonator.transition_line.length = original_length  # restore
-    plot_data = {'x': list(x_data), 'y': list(y_data), 'x_label': 'Transition Line Length (m)', 'y_label': 'Resonance Frequency (Hz)'}
+    plot_data = {'x': list(x_data*1e3), 'y': list(y_data*1e-9), 'x_label': 'Transition Line Length (mm)', 'y_label': 'Resonance Frequency (GHz)'}
     return plot_data
 
-def res_vs_coupling_data(resonator, n, num_points=50):
+def q_vs_coupling_data(resonator, n, num_points=500):
+    """Compute total quality factor vs coupling capacitance (vectorized across capacitance presets).
+    Uses the same approach as res_vs_coupling_data but returns Q_total for each coupling value.
+    """
     in_coupling = resonator.input_coupling
     out_coupling = resonator.output_coupling
 
     coupling = resonator.input_coupling = resonator.output_coupling = CapacitorCouplings['simplified']()
-    coupling.capacitance = np.linspace(coupling.CAPACITANCE_RANGE.min, coupling.CAPACITANCE_RANGE.max, num_points)
-    w_res = resonator.resonance_frequency(n)
-    y_data = w_res / (2 * math.pi)
-    resonator.input_coupling = in_coupling
-    resonator.output_coupling = out_coupling
-    plot_data = {'x': list(coupling.capacitance), 'y': list(y_data), 'x_label': 'Coupling Capacitance (F)', 'y_label': 'Resonance Frequency (Hz)'}
+    coupling.capacitance = np.exp(np.linspace(np.log(coupling.CAPACITANCE_RANGE.min), np.log(coupling.CAPACITANCE_RANGE.max), num_points))
+    # quality_factor should be vectorized when coupling.capacitance is an array
+    try:
+        q_vals = resonator.quality_factor(n)
+    finally:
+        # restore instances
+        resonator.input_coupling = in_coupling
+        resonator.output_coupling = out_coupling
+
+    plot_data = {'x': list(coupling.capacitance*1e15), 'y': list(q_vals), 'x_label': 'Coupling Capacitance (fF)', 'y_label': 'Q<sub>L</sub>'}
     return plot_data
+
+def lorentzian(f0, df, points=4000):
+    f_min, f_max = f0 - 3*df, f0 + 3*df
+    freqs = np.linspace(f_min, f_max, points)
+    return freqs, df/((freqs - f0)**2 + (df/2)**2)
+
 
 def lorentzian_data(resonator, n, points=4000, **kwargs):
     w_0 = resonator.resonance_frequency(n)
-    f0 = w_0 / (2 * math.pi) if w_0 else 0
+    f0 = w_0 / (2 * math.pi)
     q_tot = resonator.quality_factor(n)
     df = f0 / q_tot
-    span = 6 * df  # A reasonable span is a few linewidths
-    f_min, f_max = f0 - span / 2, f0 + span / 2
-    
-    freqs = np.linspace(f_min, f_max, points)
-    y_data = df/((freqs - f0)**2 + (df/2)**2)
+    return lorentzian(f0, df, points)
 
+def lorentzian_data_wrapper(resonator, n):
+    freqs, y_data = lorentzian_data(resonator, n)
     plot_data = {'x': list(freqs), 'y': list(y_data), 'x_label': 'Frequency (Hz)', 'y_label': 'S21 (dB)'}
     return plot_data
 
+def q_vs_n_data(resonator, _, num_points=7):
+    """Compute total quality factor Q_L vs mode number n.
+    Returns Q_total for integer modes from 1 to num_points (inclusive).
+    """
+
+    n_vals = list(range(1, num_points+1))
+    q_vals = [resonator.quality_factor(n) for n in n_vals]
+    plot_data = {'x': n_vals, 'y': q_vals, 'x_label': 'Resonance Mode, n', 'y_label': 'Quality factor, Q<sub>L</sub>'}
+    return plot_data
+
 plot_data_mapping = {
+    'lorentzian': lorentzian_data_wrapper,
     'res_vs_length': res_vs_length_data,
-    'res_vs_coupling': res_vs_coupling_data,
-    'lorentzian': lorentzian_data
+    'q_vs_coupling': q_vs_coupling_data,
+    'q_vs_n': q_vs_n_data,
 }
 
 def _find_candidate_attribute(inst, key):
@@ -184,7 +209,7 @@ def simulate():
     _init_current_instances()
 
     payload = request.get_json(force=True)
-    plot_type = payload.get('plot_type', 'quality_factors')
+    plot_type = payload.get('plot_type', 'lorentzian')
     try:
         # selections from payload; if missing, keep current selection
         t_name = payload.get('transition_line') or _current['selection']['transition_line']
@@ -352,6 +377,39 @@ def simulate():
 
     except KeyError as e:
         return jsonify({'error': f'Unknown component: {e}'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/presets', methods=['POST'])
+def presets():
+    """Compute preset resonance frequencies using PRESETS_COUPLING_CAPACITANCE as in table2.py.
+    Expects JSON payload with optional 'n' (mode number, default 1).
+    Returns list of {name, capacitance, frequency} where frequency is in Hz.
+    """
+    try:
+        n = int(request.json.get('n', 1) or 1)
+        if n < 1:
+            n = 1
+        # Build canonical components as in table2.py
+        tr = GeometricTransitionLine()
+        sc = SimplifiedCapacitor(capacitance=np.array(PRESETS_COUPLING_CAPACITANCE))
+        sub = EffectiveSubstrate()
+        resonator = Resonator(tr, sc, sc, sub)
+
+        x,y = lorentzian_data(resonator, n)
+
+        f0 = np.array([2.2678e9, 2.2763e9, 2.2848e9, 2.2943e9, 2.3086e9, 2.3164e9, 2.3259e9, 2.3343e9, 2.343e9, 2.3448e9, 2.3459e9, 2.3464e9])
+        ql = np.array([3.7e2, 4.9e2, 7.5e2, 1.1e3, 1.7e3, 3.9e3, 9.8e3, 7.5e4, 2.0e5, 2.0e5, 2.3e5, 2.3e5])
+        df = f0 / ql
+
+        x2,y2 = lorentzian(f0, df)
+        xs = [x]
+        ys = [y]
+        color = ('#000000', '#555588')
+
+        presets_out = [{'name': name, 'x':list(x[:,i]), 'y':list(y[:,i]), 'color':c} for x,y,c in zip(xs,ys, color) for i, name in enumerate(PRESET_NAMES)]
+
+        return jsonify({'presets': presets_out})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
