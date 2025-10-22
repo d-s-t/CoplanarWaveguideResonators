@@ -1,5 +1,5 @@
 from flask import Flask, render_template, jsonify, request
-from factory import TransitionLines, CapacitorCouplings, Substrates
+from factory import TransitionLines, CapacitorCouplings, Substrates, PRESETS_COUPLING_CAPACITANCE
 from resonator import Resonator
 import math
 import inspect
