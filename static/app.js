@@ -145,7 +145,7 @@ function _updateSelectorVisibility(selectEl) {
 function _updateAllSelectorsVisibility(ctx) {
   // ctx is an object with references to the elements we need (if available)
   if (!ctx) return;
-  const { tSelect, inSelect, outSelect, symmetricSelect, sSelect, ioStack, symmetricContainer, symmetricCheckbox } = ctx;
+  const { tSelect, inSelect, outSelect, symmetricSelect, sSelect } = ctx;
 
   _updateSelectorVisibility(tSelect);
   _updateSelectorVisibility(inSelect);
@@ -252,8 +252,26 @@ async function main() {
   const clearPresetsBtn = document.getElementById('clear_presets_btn');
   const swapColumnsBtn = document.getElementById('swap_columns_btn');
 
+  // New elements: overlay checkbox and y-offset controls for moving lorentzian on S21
+  const overlayLorentzianCheckbox = document.getElementById('overlay_lorentzian_on_s21_checkbox');
+  const lorentzianYOffsetNumber = document.getElementById('lorentzian_y_offset_number');
+  const lorentzianYOffsetRange = document.getElementById('lorentzian_y_offset_range');
+
   // Show Lorentzian controls by default
   lorentzianControls.classList.add('visible');
+
+  // keep number/range in sync and trigger simulate when changed
+  if (lorentzianYOffsetNumber && lorentzianYOffsetRange) {
+    lorentzianYOffsetNumber.addEventListener('input', () => {
+      lorentzianYOffsetRange.value = lorentzianYOffsetNumber.value;
+      doSimulate();
+    });
+    lorentzianYOffsetRange.addEventListener('input', () => {
+      lorentzianYOffsetNumber.value = lorentzianYOffsetRange.value;
+      doSimulate();
+    });
+  }
+  if (overlayLorentzianCheckbox) overlayLorentzianCheckbox.addEventListener('change', () => doSimulate());
 
   // schedule simulation with debounce
   const doSimulate = debounce(async () => {
@@ -346,6 +364,24 @@ async function main() {
         // prepend preset traces so they appear beneath saved/current traces
         if (presetTraces && presetTraces.length) traces = [...presetTraces, ...traces];
         if (presetAnnotations && presetAnnotations.length) layout.annotations = presetAnnotations;
+      }
+
+      // New: when viewing S21 (s21_vs_w), optionally overlay lorentzian traces (saved + presets) shifted by Y-offset
+      if (currentPlotType === 's21_vs_w' && overlayLorentzianCheckbox && overlayLorentzianCheckbox.checked) {
+        const offset = lorentzianYOffsetNumber ? Number(lorentzianYOffsetNumber.value) || 0 : 0;
+        // combine presetTraces and lorentzianTraces (presets first so they appear beneath saved lorentzian traces)
+        const baseLorentzianPool = (presetTraces && presetTraces.length) ? [...presetTraces, ...lorentzianTraces] : [...lorentzianTraces];
+        const overlaid = baseLorentzianPool.map((t, idx) => {
+          const y = (t.y || []).map(v => {
+            const num = (typeof v === 'number') ? v : Number(v);
+            return Number.isFinite(num) ? num + offset : v;
+          });
+          // style: dashed and slightly thinner so it reads as overlay
+          const line = Object.assign({}, t.line || {}, {dash: 'dot', width: (t.line && t.line.width) ? Math.max(1, t.line.width - 1) : 2});
+          return Object.assign({}, t, { x: t.x, y, name: (t.name || `Lorentzian ${idx+1}`) + ' (overlay)', line, showlegend: true });
+        });
+        // add overlays on top of existing traces so they are visible
+        traces = [...traces, ...overlaid];
       }
 
       // if plotting Q vs coupling, set x-axis to log scale
@@ -609,7 +645,8 @@ async function main() {
       plotTabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       currentPlotType = tab.dataset.plottype;
-      if (currentPlotType === 'lorentzian') {
+      // Show lorentzian controls when viewing lorentzian or S21 so overlay/y-offset are available on S21
+      if (currentPlotType === 'lorentzian' || currentPlotType === 's21_vs_w') {
         lorentzianControls.classList.add('visible');
       } else {
         lorentzianControls.classList.remove('visible');

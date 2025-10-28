@@ -80,7 +80,7 @@ def q_vs_coupling_data(resonator, n, num_points=500):
 def lorentzian(f0, df, points=4000):
     f_min, f_max = f0 - 3*df, f0 + 3*df
     freqs = np.linspace(f_min, f_max, points)
-    return freqs, df/((freqs - f0)**2 + (df/2)**2)
+    return freqs, 2e5*df/((freqs - f0)**2 + (df/2)**2) - 75
 
 
 def lorentzian_data(resonator, n, points=4000, **kwargs):
@@ -104,7 +104,7 @@ def q_vs_n_data(resonator, _, num_points=7):
     plot_data = {'x': n_vals, 'y': q_vals, 'x_label': 'Resonance Mode, n', 'y_label': 'Quality factor, Q<sub>L</sub>'}
     return plot_data
 
-def s21_vs_w_data(resonator, n, points=40000):
+def s21_vs_w_data(resonator, n, points=400000):
     """Compute S21 (in dB) vs angular frequency w.
 
     w is a linspace from w1/100 to 5.5*w1 where w1 is the resonance angular
@@ -119,8 +119,8 @@ def s21_vs_w_data(resonator, n, points=40000):
     if w1 is None:
         return {'x': [], 'y': [], 'x_label': 'Angular frequency (rad/s)', 'y_label': 'S21 (dB)'}
 
-    w_min = float(w1) / 2
-    w_max = float(w1) * 5.5
+    w_min = float(w1) *0.9
+    w_max = float(w1) * 1.1
     w = np.linspace(w_min, w_max, points)
     x = w / (2 * math.pi * 1e9)
     s = resonator.s21(w)
