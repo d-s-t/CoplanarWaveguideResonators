@@ -1,5 +1,5 @@
 from substrate import EffectiveSubstrate
-from transition_line import DistributedTransitionLine, SimplifiedTransitionLine, GeometricTransitionLine
+from transition_line import DistributedTransitionLine, GeometricTransitionLine
 from capacitor_coupling import SimplifiedCapacitor, GapCapacitor, FingerCapacitor
 
 TransitionLines = {

@@ -1,8 +1,7 @@
-from scipy.stats import gamma_gen
-
 from transition_line import TransitionLine
 from capacitor_coupling import CapacitorCoupling
 from substrate import Substrate
+import numpy as np
 
 class Resonator:
     """
@@ -65,17 +64,22 @@ class Resonator:
     def abcd_matrix(self, w):
         """
         Calculate the ABCD matrix of the resonator at angular frequency w.
-        :param w_n:
+        :param w: angular frequency (rad/s)
         :return:
         """
+        # check if w is numpy array
+        if not isinstance(w, np.ndarray):
+            w = np.array(w).flatten()
         z_in = self.input_coupling.impedance(w)
         z_out = self.output_coupling.impedance(w)
         gamma_l = self.transition_line.gamma(w) * self.transition_line.length
         z0 = self.transition_line.z0()
-        m_in  = np.array([[1, 1j*z_in.imag],[0, 1]])
-        m_out = np.array([[1, 1j*z_out.imag],[0, 1]])
+        ones = np.ones_like(w)
+        zeros = np.zeros_like(w)
+        m_in = np.array([[ones, 1j*z_in.imag], [zeros, ones]]).T
+        m_out = np.array([[ones, 1j*z_out.imag], [zeros, ones]]).T
         m_tl  = np.array([[np.cosh(gamma_l), z0 * np.sinh(gamma_l)],
-                          [np.sinh(gamma_l) / z0, np.cosh(gamma_l)]])
+                          [np.sinh(gamma_l) / z0, np.cosh(gamma_l)]]).T
         return m_in @ m_tl @ m_out
 
     def s21(self,  w):
@@ -85,7 +89,7 @@ class Resonator:
         :return:
         """
         abcd = self.abcd_matrix(w)
-        a, b, c, d = abcd.flatten()
+        a, b, c, d = abcd[:,0,0], abcd[:,0,1], abcd[:,1,0], abcd[:,1,1]
         r_in = self.input_coupling.impedance(w).real
         r_out = self.output_coupling.impedance(w).real
         return 2 / (a + b / r_out + c * r_in + d * r_in / r_out)
@@ -139,7 +143,6 @@ if __name__ == '__main__':
     from transition_line import GeometricTransitionLine
     from capacitor_coupling import SimplifiedCapacitor
     from substrate import EffectiveSubstrate
-    import numpy as np
     import math
 
     def res_vs_coupling_data(resonator, n, num_points=50):
@@ -159,4 +162,11 @@ if __name__ == '__main__':
     coup = SimplifiedCapacitor()
     sub = EffectiveSubstrate()
     resonator = Resonator(tl, coup, coup, sub)
-    print(res_vs_coupling_data(resonator, 1))
+    w1 = resonator.resonance_frequency(1)
+    w_min = float(w1) / 100.0
+    w_max = float(w1) * 5.5
+    w = np.linspace(w_min, w_max, 1000)
+    x = w / (2 * math.pi * 1e9)
+    s = resonator.s21(w)
+    mag = np.abs(s)
+    y = 20 * np.log10(mag + 1e-30)

@@ -85,7 +85,7 @@ class TransitionLine(ABC, metaclass=RangeCollectorMeta):
         return w_n * r * c
 
     def gamma(self, w):
-        v_ph = constants.c / (self.substrate.permittivity ** 0.5) if self.substrate else constants.c
+        v_ph = constants.c / ((self.substrate.permittivity/constants.epsilon_0) ** 0.5) if self.substrate else constants.c
         beta = w/v_ph
         alpha = self.attenuation_constant
         return alpha + 1j * beta

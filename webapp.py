@@ -92,17 +92,41 @@ def lorentzian_data(resonator, n, points=4000, **kwargs):
 
 def lorentzian_data_wrapper(resonator, n):
     freqs, y_data = lorentzian_data(resonator, n)
-    plot_data = {'x': list(freqs), 'y': list(y_data), 'x_label': 'Frequency (Hz)', 'y_label': 'S21 (dB)'}
+    plot_data = {'x': list(freqs/1e9), 'y': list(y_data), 'x_label': 'Frequency (GHz)', 'y_label': 'S21 (dB)'}
     return plot_data
 
 def q_vs_n_data(resonator, _, num_points=7):
     """Compute total quality factor Q_L vs mode number n.
     Returns Q_total for integer modes from 1 to num_points (inclusive).
     """
-
     n_vals = list(range(1, num_points+1))
     q_vals = [resonator.quality_factor(n) for n in n_vals]
     plot_data = {'x': n_vals, 'y': q_vals, 'x_label': 'Resonance Mode, n', 'y_label': 'Quality factor, Q<sub>L</sub>'}
+    return plot_data
+
+def s21_vs_w_data(resonator, n, points=40000):
+    """Compute S21 (in dB) vs angular frequency w.
+
+    w is a linspace from w1/100 to 5.5*w1 where w1 is the resonance angular
+    frequency for mode n=1 (or the provided n if desired). Returns x as a
+    list of angular frequencies (rad/s) and y as S21 in dB.
+    """
+    # Use the fundamental (n=1) resonance for the requested baseline
+    try:
+        w1 = resonator.resonance_frequency(1)
+    except Exception:
+        w1 = None
+    if w1 is None:
+        return {'x': [], 'y': [], 'x_label': 'Angular frequency (rad/s)', 'y_label': 'S21 (dB)'}
+
+    w_min = float(w1) / 2
+    w_max = float(w1) * 5.5
+    w = np.linspace(w_min, w_max, points)
+    x = w / (2 * math.pi * 1e9)
+    s = resonator.s21(w)
+    mag = np.abs(s)
+    y = 20 * np.log10(mag + 1e-30)
+    plot_data = {'x': list(x), 'y': list(y), 'x_label': 'frequency (GHz)', 'y_label': 'S21 (dB)'}
     return plot_data
 
 plot_data_mapping = {
@@ -110,6 +134,7 @@ plot_data_mapping = {
     'res_vs_length': res_vs_length_data,
     'q_vs_coupling': q_vs_coupling_data,
     'q_vs_n': q_vs_n_data,
+    's21_vs_w': s21_vs_w_data,
 }
 
 def _find_candidate_attribute(inst, key):
