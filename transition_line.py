@@ -11,11 +11,13 @@ class TransitionLine(ABC, metaclass=RangeCollectorMeta):
     This class defines the interface for different types of transition lines.
     """
     LENGTH_RANGE = ValueRange(5e-3, 28.449e-3, 40e-3, 1e-5)  # meters
+    ATTENUATION_CONSTANT_RANGE = ValueRange(0, 2.4e-4, 1e-3)  # Neper/m
 
     @abstractmethod
-    def __init__(self, length=LENGTH_RANGE.default):
+    def __init__(self, length=LENGTH_RANGE.default, attenuation_constant=ATTENUATION_CONSTANT_RANGE.default):
         self.length = length
         self.substrate: Substrate|None = None
+        self.attenuation_constant = attenuation_constant
 
     @property
     def substrate(self):
@@ -29,17 +31,24 @@ class TransitionLine(ABC, metaclass=RangeCollectorMeta):
 
     @property
     @abstractmethod
-    def parallel_capacitance(self):
-        pass
-
-    @abstractmethod
-    def parallel_inductance(self, n):
+    def capacitance_per_length(self):
         pass
 
     @property
     @abstractmethod
-    def parallel_resistance(self):
+    def inductance_per_length(self):
         pass
+
+    @property
+    def parallel_capacitance(self):
+        return self.capacitance_per_length * self.length / 2
+
+    def parallel_inductance(self, n):
+        return 2 * self.inductance_per_length * self.length / (n**2 * constants.pi**2)
+
+    @property
+    def parallel_resistance(self):
+        return self.z0() / (self.attenuation_constant * self.length)
 
     @property
     def length(self):
@@ -51,6 +60,19 @@ class TransitionLine(ABC, metaclass=RangeCollectorMeta):
             raise ValueError("Length must be positive")
         self.__length = value
 
+    @property
+    def attenuation_constant(self):
+        return self.__attenuation_constant
+
+    @attenuation_constant.setter
+    def attenuation_constant(self, value):
+        if np.any(value < 0):
+            raise ValueError("Attenuation constant must be non-negative")
+        self.__attenuation_constant = value
+
+    def z0(self):
+        return (self.inductance_per_length / self.capacitance_per_length) ** 0.5
+
     def resonance_frequency(self, n):
         l = self.parallel_inductance(n)
         c = self.parallel_capacitance
@@ -61,6 +83,13 @@ class TransitionLine(ABC, metaclass=RangeCollectorMeta):
         r = self.parallel_resistance
         c = self.parallel_capacitance
         return w_n * r * c
+
+    def gamma(self, w):
+        v_ph = constants.c / (self.substrate.permittivity ** 0.5) if self.substrate else constants.c
+        beta = w/v_ph
+        alpha = self.attenuation_constant
+        return alpha + 1j * beta
+
 
 
 
@@ -77,31 +106,15 @@ class GeometricTransitionLine(TransitionLine):
 
     WIDTH_RANGE = ValueRange(1e-6, 1e-5, 2e-5)
     SEPARATION_RANGE = ValueRange(1e-6, 1e-5, 2e-5)
-    ATTENUATION_CONSTANT_RANGE = ValueRange(0, 2.4e-4, 1e-3)  # Neper/m
 
     def __init__(self,
                  length=TransitionLine.LENGTH_RANGE.default,
+                 attenuation_constant=TransitionLine.ATTENUATION_CONSTANT_RANGE.default,
                  width=WIDTH_RANGE.default,
-                 separation=SEPARATION_RANGE.default,
-                 attenuation_constant=ATTENUATION_CONSTANT_RANGE.default):
-        super().__init__(length)
+                 separation=SEPARATION_RANGE.default):
+        super().__init__(length, attenuation_constant)
         self.width = width
         self.separation = separation
-        self.attenuation_constant = attenuation_constant
-
-    @property
-    def parallel_resistance(self):
-        return self._z0() / (self.attenuation_constant * self.length)
-
-    def _z0(self):
-        return (self.inductance_per_length / self.capacitance_per_length) ** 0.5
-
-    def parallel_inductance(self, n):
-        return 2 * self.inductance_per_length * self.length / (n**2 * constants.pi**2)
-
-    @property
-    def parallel_capacitance(self):
-        return self.capacitance_per_length * self.length / 2
 
     @property
     def width(self):
@@ -122,16 +135,6 @@ class GeometricTransitionLine(TransitionLine):
         if np.any(value <= 0):
             raise ValueError("Separation must be positive")
         self.__separation = value
-
-    @property
-    def attenuation_constant(self):
-        return self.__attenuation_constant
-
-    @attenuation_constant.setter
-    def attenuation_constant(self, value):
-        if np.any(value < 0):
-            raise ValueError("Attenuation constant must be non-negative")
-        self.__attenuation_constant = value
 
     @property
     def capacitance_per_length(self):
@@ -163,31 +166,15 @@ class DistributedTransitionLine(TransitionLine):
     """
     CAPACITANCE_PER_LENGTH_RANGE = ValueRange(1e-12, 1e-11, 1e-10)  # F/m
     INDUCTANCE_PER_LENGTH_RANGE = ValueRange(1e-10, 1e-6, 1e-5)  # H/m
-    ATTENUATION_CONSTANT_RANGE = ValueRange(0, 2.4e-4, 1e-3)  # Neper/m
 
     def __init__(self,
                  length=TransitionLine.LENGTH_RANGE.default,
+                 attenuation_constant=TransitionLine.ATTENUATION_CONSTANT_RANGE.default,
                  capacitance_per_length=CAPACITANCE_PER_LENGTH_RANGE.default,
-                 inductance_per_length=INDUCTANCE_PER_LENGTH_RANGE.default,
-                 attenuation_constant=ATTENUATION_CONSTANT_RANGE.default):
-        super().__init__(length)
+                 inductance_per_length=INDUCTANCE_PER_LENGTH_RANGE.default):
+        super().__init__(length, attenuation_constant)
         self.capacitance_per_length = capacitance_per_length
         self.inductance_per_length = inductance_per_length
-        self.attenuation_constant = attenuation_constant
-
-    @property
-    def parallel_capacitance(self):
-        return self.capacitance_per_length * self.length / 2
-
-    def parallel_inductance(self, n):
-        return 2 * self.inductance_per_length * self.length / (n**2 * constants.pi**2)
-
-    @property
-    def parallel_resistance(self):
-        return self._z0() / (self.attenuation_constant * self.length)
-
-    def _z0(self):
-        return (self.inductance_per_length / self.capacitance_per_length) ** 0.5
 
     @property
     def capacitance_per_length(self):
@@ -207,74 +194,66 @@ class DistributedTransitionLine(TransitionLine):
             raise ValueError("Inductance per length must be positive")
         self.__inductance_per_length = value
 
-    @property
-    def attenuation_constant(self):
-        return self.__attenuation_constant
-    @attenuation_constant.setter
-    def attenuation_constant(self, value):
-        if np.any(value < 0):
-            raise ValueError("Attenuation constant must be non-negative")
-        self.__attenuation_constant = value
 
-class SimplifiedTransitionLine(TransitionLine):
-    """
-    A simplified version of the TransitionLine class.
-    This class can be expanded with specific attributes and methods as needed.
-    attributes:
-        capacitance: effective capacitance as parallel LCR circuit
-        resistance: effective resistance as parallel LCR circuit
-        base_inductance: effective inductance as parallel LCR circuit
-    """
-    CAPACITANCE_RANGE = ValueRange(1e-15, 1e-14, 1e-12)  # Farad
-    RESISTANCE_RANGE = ValueRange(0, 50, 100, 1)  # Ohm
-    BASE_INDUCTANCE_RANGE = ValueRange(1e-9, 1e-8, 1e-7, 1e-9)  # Henry
-
-    def __init__(self,
-                 length=TransitionLine.LENGTH_RANGE.default,
-                 capacitance=CAPACITANCE_RANGE.default,
-                 resistance=RESISTANCE_RANGE.default,
-                 base_inductance=BASE_INDUCTANCE_RANGE.default):
-        super().__init__(length)
-        self.capacitance = capacitance
-        self.resistance = resistance
-        self.base_inductance = base_inductance
-
-    @property
-    def parallel_capacitance(self):
-        return self.capacitance
-
-    def parallel_inductance(self, n):
-        return self.base_inductance / (n**2)
-
-    @property
-    def parallel_resistance(self):
-        return self.resistance
-
-    @property
-    def capacitance(self):
-        return self.__capacitance
-    @capacitance.setter
-    def capacitance(self, value):
-        if np.any(value <= 0):
-            raise ValueError("Capacitance must be positive")
-        self.__capacitance = value
-
-    @property
-    def resistance(self):
-        return self.__resistance
-    @resistance.setter
-    def resistance(self, value):
-        if np.any(value <= 0):
-            raise ValueError("Resistance must be positive")
-        self.__resistance = value
-
-    @property
-    def base_inductance(self):
-        return self.__base_inductance
-    @base_inductance.setter
-    def base_inductance(self, value):
-        if np.any(value <= 0):
-            raise ValueError("Base inductance must be positive")
-        self.__base_inductance = value
-
-
+# class SimplifiedTransitionLine(TransitionLine):
+#     """
+#     A simplified version of the TransitionLine class.
+#     This class can be expanded with specific attributes and methods as needed.
+#     attributes:
+#         capacitance: effective capacitance as parallel LCR circuit
+#         resistance: effective resistance as parallel LCR circuit
+#         base_inductance: effective inductance as parallel LCR circuit
+#     """
+#     CAPACITANCE_RANGE = ValueRange(1e-15, 1e-14, 1e-12)  # Farad
+#     RESISTANCE_RANGE = ValueRange(0, 50, 100, 1)  # Ohm
+#     BASE_INDUCTANCE_RANGE = ValueRange(1e-9, 1e-8, 1e-7, 1e-9)  # Henry
+#
+#     def __init__(self,
+#                  length=TransitionLine.LENGTH_RANGE.default,
+#                  capacitance=CAPACITANCE_RANGE.default,
+#                  resistance=RESISTANCE_RANGE.default,
+#                  base_inductance=BASE_INDUCTANCE_RANGE.default):
+#         super().__init__(length)
+#         self.capacitance = capacitance
+#         self.resistance = resistance
+#         self.base_inductance = base_inductance
+#
+#     @property
+#     def parallel_capacitance(self):
+#         return self.capacitance
+#
+#     def parallel_inductance(self, n):
+#         return self.base_inductance / (n**2)
+#
+#     @property
+#     def parallel_resistance(self):
+#         return self.resistance
+#
+#     @property
+#     def capacitance(self):
+#         return self.__capacitance
+#     @capacitance.setter
+#     def capacitance(self, value):
+#         if np.any(value <= 0):
+#             raise ValueError("Capacitance must be positive")
+#         self.__capacitance = value
+#
+#     @property
+#     def resistance(self):
+#         return self.__resistance
+#     @resistance.setter
+#     def resistance(self, value):
+#         if np.any(value <= 0):
+#             raise ValueError("Resistance must be positive")
+#         self.__resistance = value
+#
+#     @property
+#     def base_inductance(self):
+#         return self.__base_inductance
+#     @base_inductance.setter
+#     def base_inductance(self, value):
+#         if np.any(value <= 0):
+#             raise ValueError("Base inductance must be positive")
+#         self.__base_inductance = value
+#
+#

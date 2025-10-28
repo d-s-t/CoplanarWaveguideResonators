@@ -33,6 +33,11 @@ class CapacitorCoupling(ABC, metaclass=RangeCollectorMeta):
         r_l = self.resistance
         return w_n * c_k * r_l
 
+    def impedance(self, w_n):
+        c_k = self.capacitance
+        r_l = self.resistance
+        return r_l - 1j / (w_n * c_k)
+
     @property
     def resistance(self):
         return self.__resistance

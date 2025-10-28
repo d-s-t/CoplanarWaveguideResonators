@@ -1,3 +1,5 @@
+from scipy.stats import gamma_gen
+
 from transition_line import TransitionLine
 from capacitor_coupling import CapacitorCoupling
 from substrate import Substrate
@@ -59,6 +61,34 @@ class Resonator:
         q_i = self.quality_factor_internal(n)
         q_e = self.quality_factor_external(n)
         return 1 / (1 / q_i + 1 / q_e)
+
+    def abcd_matrix(self, w):
+        """
+        Calculate the ABCD matrix of the resonator at angular frequency w.
+        :param w_n:
+        :return:
+        """
+        z_in = self.input_coupling.impedance(w)
+        z_out = self.output_coupling.impedance(w)
+        gamma_l = self.transition_line.gamma(w) * self.transition_line.length
+        z0 = self.transition_line.z0()
+        m_in  = np.array([[1, 1j*z_in.imag],[0, 1]])
+        m_out = np.array([[1, 1j*z_out.imag],[0, 1]])
+        m_tl  = np.array([[np.cosh(gamma_l), z0 * np.sinh(gamma_l)],
+                          [np.sinh(gamma_l) / z0, np.cosh(gamma_l)]])
+        return m_in @ m_tl @ m_out
+
+    def s21(self,  w):
+        """
+        Calculate the S21 parameter of the resonator at angular frequency w.
+        :param w:
+        :return:
+        """
+        abcd = self.abcd_matrix(w)
+        a, b, c, d = abcd.flatten()
+        r_in = self.input_coupling.impedance(w).real
+        r_out = self.output_coupling.impedance(w).real
+        return 2 / (a + b / r_out + c * r_in + d * r_in / r_out)
 
     @property
     def transition_line(self):
